@@ -3,46 +3,38 @@ import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
   try {
-    console.log("========== AUTH DEBUG ==========");
-    console.log("Authorization:", req.headers.authorization);
-    console.log("req.auth:", req.auth);
+    const auth = await req.auth();
 
-    const userId = req.auth?.userId;
+    console.log(auth);
 
-    if (!userId) {
+    if (!auth.userId) {
       return res.status(401).json({
         success: false,
-        message: "User not authenticated",
+        message: "Not authenticated",
       });
     }
 
-    let user = await User.findById(userId);
+    let user = await User.findById(auth.userId);
 
     if (!user) {
-      console.log("User not found in MongoDB.");
-      console.log("Fetching user from Clerk...");
-
-      const clerkUser = await clerkClient.users.getUser(userId);
+      const clerkUser = await clerkClient.users.getUser(auth.userId);
 
       user = await User.create({
         _id: clerkUser.id,
         name:
           `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() ||
           "User",
-        email: clerkUser.emailAddresses?.[0]?.emailAddress ?? "",
+        email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
         image: clerkUser.imageUrl ?? "",
         role: "user",
-        recentSearchedCities: [],
       });
-
-      console.log("MongoDB user created.");
     }
 
     req.user = user;
 
     next();
+
   } catch (err) {
-    console.error("========== AUTH ERROR ==========");
     console.error(err);
 
     return res.status(401).json({
