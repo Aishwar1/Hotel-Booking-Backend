@@ -3,181 +3,232 @@ import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
 
 // ============================================================
-// AI CONTROLLER  (NEW)
-// ============================================================
-// Two AI-powered endpoints:
-//
-//  1. POST /api/ai/chat
-//     General hotel assistant chatbot. Answers questions about
-//     QuickStay, booking policies, amenities, etc.
-//
-//  2. POST /api/ai/recommend
-//     Smart hotel recommender.  The client sends a user's
-//     preferences (city, budget, amenities they want) and we
-//     fetch the matching rooms from the DB, then ask the AI to
-//     rank and explain the best matches.
-//
-// Both use the OpenAI API (set OPENAI_API_KEY in Replit Secrets).
-//
-// NOTE: OpenAI client is created lazily inside each function so
-// the server starts cleanly even before the key is configured.
+// GROQ CLIENT
 // ============================================================
 
-// Lazy getter — only constructs the client when a request arrives.
-const getOpenAI = () => {
-    if (!process.env.OPENAI_API_KEY) {
-        throw new Error("OPENAI_API_KEY is not set. Add it to Replit Secrets.");
-    }
-    return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const getGroq = () => {
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY is not configured.");
+  }
+
+  return new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+  });
 };
 
-// ---- POST /api/ai/chat ----
-// Body: { messages: [{role, content}] }
-// Returns: { reply: "..." }
+// ============================================================
+// AI CHAT
+// ============================================================
+
 export const chatWithAI = async (req, res) => {
-    try {
-        const { messages = [] } = req.body;
+  try {
+    const { messages = [] } = req.body;
 
-        const systemPrompt = `You are QuickStay AI — a friendly and knowledgeable hotel booking assistant
-for the QuickStay platform. Help users find rooms, understand booking policies,
-answer questions about amenities, and guide them through the reservation process.
-Keep responses concise (2-4 sentences max) and conversational.
-If a user asks about specific availability, tell them to use the booking form on the room page.
-Do not make up room details; stick to what you know about QuickStay as a platform.`;
+    const systemPrompt = `
+You are QuickStay AI.
 
-        const response = await getOpenAI().chat.completions.create({
-            model: "gpt-4o-mini",        // Affordable and fast
-            messages: [
-                { role: "system", content: systemPrompt },
-                ...messages,
-            ],
-            max_tokens: 300,
-            temperature: 0.7,
-        });
+You are a helpful hotel booking assistant.
 
-        const reply = response.choices[0].message.content;
-        res.json({ success: true, reply });
-    } catch (error) {
-        console.error("AI chat error:", error.message);
-        res.json({
-            success: false,
-            reply: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
-        });
-    }
+Help users with:
+- hotel recommendations
+- room booking
+- amenities
+- booking policies
+- payment queries
+- travel tips
+
+Keep answers friendly and concise.
+Never invent hotel information.
+`;
+
+    const response = await getGroq().chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        ...messages,
+      ],
+
+      temperature: 0.7,
+      max_tokens: 300,
+    });
+
+    return res.json({
+      success: true,
+      reply: response.choices[0].message.content,
+    });
+  } catch (err) {
+    console.log("AI Chat Error:", err);
+
+    return res.json({
+      success: false,
+      reply:
+        "Sorry! AI assistant is temporarily unavailable.",
+    });
+  }
 };
 
-// ---- POST /api/ai/recommend ----
-// Body: { city, budget, amenities, guests, checkInDate, checkOutDate }
-// Returns: { recommendations: [{room, hotel, score, reason}] }
+// ============================================================
+// AI HOTEL RECOMMENDATION
+// ============================================================
+
 export const getAIRecommendations = async (req, res) => {
+  try {
+    const {
+      city = "",
+      budget = 99999,
+      amenities = [],
+      guests = 1,
+      checkInDate,
+      checkOutDate,
+    } = req.body;
+
+    const rooms = await Room.find({
+      isAvailable: true,
+    }).populate("hotel");
+
+    if (!rooms.length) {
+      return res.json({
+        success: true,
+        recommendations: [],
+      });
+    }
+
+    const candidates = rooms.filter((room) => {
+      const cityMatch =
+        !city ||
+        room.hotel?.city
+          ?.toLowerCase()
+          .includes(city.toLowerCase());
+
+      const budgetMatch =
+        room.pricePerNight <= Number(budget);
+
+      return cityMatch && budgetMatch;
+    });
+
+    if (!candidates.length) {
+      return res.json({
+        success: true,
+        recommendations: [],
+      });
+    }
+
+    const roomSummary = candidates.map((room, index) => ({
+      index,
+
+      hotel: room.hotel?.name,
+
+      city: room.hotel?.city,
+
+      roomType: room.roomType,
+
+      address: room.hotel?.address,
+
+      pricePerNight: room.pricePerNight,
+
+      amenities: room.amenities,
+    }));
+
+    const prompt = `
+A guest wants a hotel.
+
+City:
+${city || "Any"}
+
+Budget:
+${budget}
+
+Guests:
+${guests}
+
+Amenities:
+${amenities.length ? amenities.join(", ") : "No preference"}
+
+Available Rooms:
+
+${JSON.stringify(roomSummary, null, 2)}
+
+Return ONLY valid JSON.
+
+Example:
+
+[
+ {
+   "index":0,
+   "score":9,
+   "reason":"Best overall value."
+ }
+]
+`;
+
+    const aiResponse = await getGroq().chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+
+      temperature: 0.3,
+
+      max_tokens: 400,
+    });
+
+    let rankings = [];
+
     try {
-        const {
-            city = "",
-            budget = 9999,
-            amenities = [],
-            guests = 1,
-            checkInDate,
-            checkOutDate,
-        } = req.body;
+      rankings = JSON.parse(
+        aiResponse.choices[0].message.content
+      );
+    } catch {
+      rankings = [];
+    }
 
-        // Step 1: Fetch all rooms with their hotel data from the database
-        const rooms = await Room.find({ isAvailable: true }).populate("hotel");
+    const recommendations = rankings
+      .map((item) => {
+        const room = candidates[item.index];
 
-        if (!rooms.length) {
-            return res.json({ success: true, recommendations: [], message: "No rooms available" });
-        }
+        if (!room) return null;
 
-        // Step 2: Pre-filter locally for speed (don't send irrelevant data to the AI)
-        const candidates = rooms.filter((room) => {
-            const matchesCity = !city || room.hotel?.city?.toLowerCase().includes(city.toLowerCase());
-            const matchesBudget = room.pricePerNight <= Number(budget);
-            return matchesCity && matchesBudget;
-        });
-
-        if (!candidates.length) {
-            return res.json({
-                success: true,
-                recommendations: [],
-                message: "No rooms match your filters. Try adjusting your budget or city.",
-            });
-        }
-
-        // Step 3: Build a concise summary of candidates for the AI to reason over
-        const roomSummaries = candidates.map((room, i) => ({
-            index: i,
-            id: room._id,
-            hotel: room.hotel?.name,
-            city: room.hotel?.city,
-            address: room.hotel?.address,
+        return {
+          room: {
+            _id: room._id,
             roomType: room.roomType,
             pricePerNight: room.pricePerNight,
             amenities: room.amenities,
-        }));
+            images: room.images,
+          },
 
-        // Step 4: Ask the AI to rank and explain the top 3 matches
-        const aiPrompt = `You are a hotel recommendation engine. A guest has these preferences:
-- Destination city: ${city || "any"}
-- Maximum budget per night: $${budget}
-- Preferred amenities: ${amenities.length ? amenities.join(", ") : "no preference"}
-- Guests: ${guests}
-- Check-in: ${checkInDate || "flexible"}
-- Check-out: ${checkOutDate || "flexible"}
+          hotel: {
+            name: room.hotel?.name,
+            city: room.hotel?.city,
+            address: room.hotel?.address,
+          },
 
-Here are the available rooms (JSON):
-${JSON.stringify(roomSummaries, null, 2)}
+          score: item.score,
 
-Return a JSON array of the top 3 recommended rooms (or fewer if less are available).
-Each item must have:
-  - "index": the room's index from the list above
-  - "score": a match score out of 10 (integer)
-  - "reason": one sentence explaining why this room suits the guest
+          reason: item.reason,
+        };
+      })
+      .filter(Boolean);
 
-Only return the JSON array, no other text.`;
+    return res.json({
+      success: true,
+      recommendations,
+    });
+  } catch (err) {
+    console.log("AI Recommendation Error:", err);
 
-        const aiResponse = await getOpenAI().chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [{ role: "user", content: aiPrompt }],
-            max_tokens: 400,
-            temperature: 0.3,
-            response_format: { type: "json_object" },
-        });
-
-        // Step 5: Parse the AI response and attach the full room data
-        let rankings = [];
-        try {
-            const parsed = JSON.parse(aiResponse.choices[0].message.content);
-            // The AI might return { recommendations: [...] } or just [...]
-            rankings = Array.isArray(parsed) ? parsed : (parsed.recommendations || parsed.rooms || []);
-        } catch {
-            rankings = [];
-        }
-
-        const recommendations = rankings
-            .map((item) => {
-                const room = candidates[item.index];
-                if (!room) return null;
-                return {
-                    room: {
-                        _id: room._id,
-                        roomType: room.roomType,
-                        pricePerNight: room.pricePerNight,
-                        amenities: room.amenities,
-                        images: room.images,
-                    },
-                    hotel: {
-                        name: room.hotel?.name,
-                        city: room.hotel?.city,
-                        address: room.hotel?.address,
-                    },
-                    score: item.score,
-                    reason: item.reason,
-                };
-            })
-            .filter(Boolean);
-
-        res.json({ success: true, recommendations });
-    } catch (error) {
-        console.error("AI recommend error:", error.message);
-        res.json({ success: false, message: "AI recommendation service unavailable" });
-    }
+    return res.json({
+      success: false,
+      message: "Recommendation service unavailable.",
+    });
+  }
 };
