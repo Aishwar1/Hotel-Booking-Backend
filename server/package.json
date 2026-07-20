@@ -1,0 +1,10 @@
+{
+  "name": "quickstay-server",
+  "version": "1.0.0",
+  "description": "QuickStay Express backend",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev":   "nodemon server.js"
+  }
+}

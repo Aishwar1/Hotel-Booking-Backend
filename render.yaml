@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: quickstay
+    runtime: node
+    region: oregon
+    plan: free
+
+    # Build: install all deps, then build the Vite frontend
+    buildCommand: npm install && cd client && npx vite build
+
+    # Start: run Express (serves API + built Vite frontend in production)
+    startCommand: NODE_ENV=production node server/server.js
+
+    # Health check path (added in server.js)
+    healthCheckPath: /api/health
+
+    envVars:
+      # ─── Required secrets — set these in the Render dashboard ───────────────
+      - key: MONGODB_URI
+        sync: false          # Fill in Render dashboard (include /hotel-booking in URL)
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_WEBHOOK_SECRET
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false          # Optional — AI chatbot won't work without this
+      - key: SENDER_EMAIL
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+      # ─── Non-secret config — set once after first deploy ─────────────────────
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        sync: false          # Set to your Render app URL: https://quickstay.onrender.com
+      - key: VITE_CURRENCY
+        value: "$"

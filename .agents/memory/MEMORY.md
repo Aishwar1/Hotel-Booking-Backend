@@ -1,0 +1,2 @@
+- [QuickStay setup](quickstay-setup.md) — bug fixes, Stripe/AI added, packages at root (not server/), both workflows configured
+- [QuickStay DB routing](quickstay-db.md) — must use dbName:"hotel-booking" in mongoose.connect; cluster also has "test" DB with stale seed data
