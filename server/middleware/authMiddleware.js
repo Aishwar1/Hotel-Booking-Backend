@@ -3,8 +3,9 @@ import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
   try {
-    console.log("========== AUTH ==========");
-    console.log("Auth:", req.auth);
+    console.log("========== AUTH DEBUG ==========");
+    console.log("Authorization:", req.headers.authorization);
+    console.log("req.auth:", req.auth);
 
     const userId = req.auth?.userId;
 
@@ -18,34 +19,35 @@ export const protect = async (req, res, next) => {
     let user = await User.findById(userId);
 
     if (!user) {
-      console.log("User not found in MongoDB. Creating...");
+      console.log("User not found in MongoDB.");
+      console.log("Fetching user from Clerk...");
 
-      const clerk = await clerkClient();
-
-      const clerkUser = await clerk.users.getUser(userId);
+      const clerkUser = await clerkClient.users.getUser(userId);
 
       user = await User.create({
         _id: clerkUser.id,
         name:
-          `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() ||
+          `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() ||
           "User",
-        email:
-          clerkUser.emailAddresses[0]?.emailAddress || "",
-        image: clerkUser.imageUrl || "",
+        email: clerkUser.emailAddresses?.[0]?.emailAddress ?? "",
+        image: clerkUser.imageUrl ?? "",
+        role: "user",
+        recentSearchedCities: [],
       });
 
-      console.log("User created successfully.");
+      console.log("MongoDB user created.");
     }
 
     req.user = user;
 
     next();
-  } catch (error) {
-    console.error("Protect middleware:", error);
+  } catch (err) {
+    console.error("========== AUTH ERROR ==========");
+    console.error(err);
 
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
-      message: error.message,
+      message: err.message,
     });
   }
 };
