@@ -127,7 +127,13 @@ const RoomDetails = () => {
         }
     };
 
-    if (!room) return null;
+    if (!room) {
+    return (
+        <div className="py-40 flex justify-center items-center">
+            <p className="text-2xl text-gray-500">Loading room details...</p>
+        </div>
+    );
+}
 
     return (
         <div className="py-28 md:py-35 px-4 md:px-16 lg:px-24 xl:px-32">
