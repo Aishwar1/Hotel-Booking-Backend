@@ -5,7 +5,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import mongoSanitize from "express-mongo-sanitize";
 import { clerkMiddleware } from "@clerk/express";
 
 import connectDB from "./configs/db.js";
@@ -20,13 +19,14 @@ import aiRouter from "./routes/aiRoutes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Connect Database & Cloudinary
+// Connect Database
 connectDB();
 connectCloudinary();
 
 const app = express();
 
-// Security
+// ---------------- Security ----------------
+
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -34,7 +34,8 @@ app.use(
   })
 );
 
-// CORS
+// ---------------- CORS ----------------
+
 app.use(
   cors({
     origin: (_, callback) => callback(null, true),
@@ -42,7 +43,8 @@ app.use(
   })
 );
 
-// Rate Limiting
+// ---------------- Rate Limiter ----------------
+
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
@@ -60,19 +62,25 @@ const aiLimiter = rateLimit({
 app.use("/api", generalLimiter);
 app.use("/api/ai", aiLimiter);
 
-// Clerk Webhook
+// ---------------- Clerk Webhook ----------------
+
 app.use(
   "/api/clerk",
   express.raw({ type: "application/json" }),
   clerkWebhooks
 );
 
-// Middleware
+// ---------------- Middleware ----------------
+
 app.use(express.json());
-app.use(mongoSanitize());
+
+// express-mongo-sanitize is NOT compatible with Express 5
+// app.use(mongoSanitize());
+
 app.use(clerkMiddleware());
 
-// Health Route
+// ---------------- Health ----------------
+
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
@@ -81,7 +89,8 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// API Routes
+// ---------------- API Routes ----------------
+
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
@@ -89,13 +98,13 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/ai", aiRouter);
 
-// Production
+// ---------------- Production ----------------
+
 if (process.env.NODE_ENV === "production") {
   const clientDist = path.join(__dirname, "../client/dist");
 
   app.use(express.static(clientDist));
 
-  // Don't rewrite API requests
   app.use((req, res, next) => {
     if (req.path.startsWith("/api")) {
       return next();
@@ -105,13 +114,23 @@ if (process.env.NODE_ENV === "production") {
   });
 } else {
   app.get("/", (req, res) => {
-    res.send("QuickStay API Running 🚀");
+    res.send("🚀 QuickStay API Running");
   });
 }
 
-// Global Error Handler
+// ---------------- API 404 ----------------
+
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API route not found",
+  });
+});
+
+// ---------------- Error Handler ----------------
+
 app.use((err, req, res, next) => {
-  console.error(err);
+  console.error(err.stack);
 
   res.status(err.status || 500).json({
     success: false,
@@ -119,7 +138,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
+// ---------------- Start ----------------
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
