@@ -115,38 +115,49 @@ export const createBooking = async (req, res) => {
       isPaid: false,
     });
 
-    try {
-      await transporter.sendMail({
+    // -----------------------------
+    // Send email in background
+    // -----------------------------
+    transporter
+      .sendMail({
         from: process.env.SENDER_EMAIL,
         to: req.user.email,
         subject: "QuickStay Booking Confirmation",
         html: `
-          <h2>Booking Confirmed</h2>
+          <h2>Booking Confirmed 🎉</h2>
 
-          <p>Hello ${req.user.name}</p>
+          <p>Hello <b>${req.user.name}</b>,</p>
 
           <p>Your booking has been created successfully.</p>
 
           <hr>
 
-          <p><b>Hotel :</b> ${roomData.hotel.name}</p>
-          <p><b>Check In :</b> ${new Date(
+          <p><b>Hotel:</b> ${roomData.hotel.name}</p>
+
+          <p><b>Check In:</b> ${new Date(
             booking.checkInDate
           ).toDateString()}</p>
-          <p><b>Check Out :</b> ${new Date(
+
+          <p><b>Check Out:</b> ${new Date(
             booking.checkOutDate
           ).toDateString()}</p>
-          <p><b>Total :</b> $${booking.totalPrice}</p>
+
+          <p><b>Total:</b> $${booking.totalPrice}</p>
 
           <hr>
 
-          <p>Thank you for booking with QuickStay.</p>
+          <p>Thank you for choosing QuickStay ❤️</p>
         `,
+      })
+      .then(() => {
+        console.log("Booking email sent");
+      })
+      .catch((err) => {
+        console.log("Email Error:", err.message);
       });
-    } catch (mailError) {
-      console.log("Email Error:", mailError.message);
-    }
 
+    // IMPORTANT:
+    // Return immediately without waiting for email
     return res.json({
       success: true,
       bookingId: booking._id,
