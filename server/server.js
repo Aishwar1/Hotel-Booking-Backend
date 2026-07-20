@@ -77,7 +77,12 @@ app.use(express.json());
 // express-mongo-sanitize is NOT compatible with Express 5
 // app.use(mongoSanitize());
 
-app.use(clerkMiddleware());
+app.use(
+  clerkMiddleware({
+    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+    secretKey: process.env.CLERK_SECRET_KEY,
+  })
+);
 
 // ---------------- Health ----------------
 
