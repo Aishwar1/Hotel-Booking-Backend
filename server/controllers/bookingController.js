@@ -4,161 +4,239 @@ import Hotel from "../models/Hotel.js";
 import transporter from "../configs/nodemailer.js";
 
 // ============================================================
-// BOOKING CONTROLLER
+// Helper - Check Room Availability
 // ============================================================
 
-// ---------- Helper: check if a room is free for given dates ----------
-const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
-    try {
-        const bookings = await Booking.find({
-            room,
-            checkInDate:  { $lte: new Date(checkOutDate) },
-            checkOutDate: { $gte: new Date(checkInDate) },
-        });
-        return bookings.length === 0;
-    } catch (error) {
-        console.error("checkAvailability error:", error.message);
-        return false;
-    }
+const checkAvailability = async ({ room, checkInDate, checkOutDate }) => {
+  const bookings = await Booking.find({
+    room,
+    checkInDate: { $lt: new Date(checkOutDate) },
+    checkOutDate: { $gt: new Date(checkInDate) },
+  });
+
+  return bookings.length === 0;
 };
 
-// ---------- POST /api/bookings/check-availability ----------
+// ============================================================
+// POST /api/bookings/check-availability
+// ============================================================
+
 export const checkAvailabilityAPI = async (req, res) => {
-    try {
-        const { room, checkInDate, checkOutDate } = req.body;
+  try {
+    const { room, checkInDate, checkOutDate } = req.body;
 
-        if (!room || !checkInDate || !checkOutDate) {
-            return res.status(400).json({ success: false, message: "room, checkInDate, and checkOutDate are required" });
-        }
-
-        // Validate date ordering
-        if (new Date(checkInDate) >= new Date(checkOutDate)) {
-            return res.status(400).json({ success: false, message: "checkOutDate must be after checkInDate" });
-        }
-
-        const isAvailable = await checkAvailability({ checkInDate, checkOutDate, room });
-        res.json({ success: true, isAvailable });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+    if (!room || !checkInDate || !checkOutDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing booking information",
+      });
     }
+
+    const available = await checkAvailability({
+      room,
+      checkInDate,
+      checkOutDate,
+    });
+
+    return res.json({
+      success: true,
+      isAvailable: available,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
 
-// ---------- POST /api/bookings/book ----------
+// ============================================================
+// POST /api/bookings/book
+// ============================================================
+
 export const createBooking = async (req, res) => {
-    try {
-        const { room, checkInDate, checkOutDate, guests, paymentMethod = "Pay At Hotel" } = req.body;
-        const user = req.auth.userId;
+  try {
+    console.log("========= CREATE BOOKING =========");
+    console.log("req.user :", req.user);
 
-        // ---- Input validation ----
-        if (!room || !checkInDate || !checkOutDate) {
-            return res.status(400).json({ success: false, message: "room, checkInDate, and checkOutDate are required" });
-        }
-        if (new Date(checkInDate) >= new Date(checkOutDate)) {
-            return res.status(400).json({ success: false, message: "checkOutDate must be after checkInDate" });
-        }
-        const guestCount = Number(guests);
-        if (!Number.isFinite(guestCount) || guestCount < 1 || guestCount > 20) {
-            return res.status(400).json({ success: false, message: "Invalid guest count" });
-        }
-        const ALLOWED_PAYMENT_METHODS = ["Pay At Hotel", "Stripe"];
-        if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
-            return res.status(400).json({ success: false, message: "Invalid payment method" });
-        }
+    const {
+      room,
+      checkInDate,
+      checkOutDate,
+      guests,
+      paymentMethod = "Pay At Hotel",
+    } = req.body;
 
-        // Double-check availability before confirming
-        const isAvailable = await checkAvailability({ checkInDate, checkOutDate, room });
-        if (!isAvailable) {
-            return res.json({ success: false, message: "Room is not available for these dates" });
-        }
-
-        const roomData = await Room.findById(room).populate("hotel");
-        if (!roomData) {
-            return res.status(404).json({ success: false, message: "Room not found" });
-        }
-
-        const nights = Math.ceil(
-            (new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 3600 * 24)
-        );
-        const totalPrice = roomData.pricePerNight * nights;
-
-        const booking = await Booking.create({
-            user,
-            room,
-            hotel: roomData.hotel._id,
-            guests: guestCount,
-            checkInDate,
-            checkOutDate,
-            totalPrice,
-            paymentMethod,
-            isPaid: false,
-        });
-
-        // ---- Send confirmation email (failure does NOT block booking) ----
-        try {
-            await transporter.sendMail({
-                from: process.env.SENDER_EMAIL,
-                to: req.user.email,
-                subject: "QuickStay – Booking Confirmation",
-                html: `
-                    <h2>Your Booking is Confirmed! 🏨</h2>
-                    <p>Dear ${req.user.name},</p>
-                    <p>Thank you for booking with QuickStay. Here are your details:</p>
-                    <ul>
-                        <li><strong>Booking ID:</strong> ${booking._id}</li>
-                        <li><strong>Hotel:</strong> ${roomData.hotel.name}</li>
-                        <li><strong>Location:</strong> ${roomData.hotel.address}</li>
-                        <li><strong>Check-In:</strong> ${new Date(booking.checkInDate).toDateString()}</li>
-                        <li><strong>Check-Out:</strong> ${new Date(booking.checkOutDate).toDateString()}</li>
-                        <li><strong>Nights:</strong> ${nights}</li>
-                        <li><strong>Total:</strong> $${booking.totalPrice}</li>
-                        <li><strong>Payment:</strong> ${paymentMethod}</li>
-                    </ul>
-                    <p>We look forward to welcoming you!</p>
-                `,
-            });
-        } catch (mailError) {
-            console.error("Booking email failed (non-fatal):", mailError.message);
-        }
-
-        res.json({ success: true, message: "Booking created successfully", bookingId: booking._id });
-    } catch (error) {
-        console.error("createBooking error:", error.message);
-        res.status(500).json({ success: false, message: "Failed to create booking" });
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed",
+      });
     }
+
+    const roomData = await Room.findById(room).populate("hotel");
+
+    if (!roomData) {
+      return res.status(404).json({
+        success: false,
+        message: "Room not found",
+      });
+    }
+
+    const available = await checkAvailability({
+      room,
+      checkInDate,
+      checkOutDate,
+    });
+
+    if (!available) {
+      return res.json({
+        success: false,
+        message: "Room not available",
+      });
+    }
+
+    const nights = Math.ceil(
+      (new Date(checkOutDate) - new Date(checkInDate)) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    const booking = await Booking.create({
+      user: req.user._id,
+      room: roomData._id,
+      hotel: roomData.hotel._id,
+      guests: Number(guests),
+      checkInDate,
+      checkOutDate,
+      totalPrice: roomData.pricePerNight * nights,
+      paymentMethod,
+      isPaid: false,
+    });
+
+    try {
+      await transporter.sendMail({
+        from: process.env.SENDER_EMAIL,
+        to: req.user.email,
+        subject: "QuickStay Booking Confirmation",
+        html: `
+          <h2>Booking Confirmed</h2>
+
+          <p>Hello ${req.user.name}</p>
+
+          <p>Your booking has been created successfully.</p>
+
+          <hr>
+
+          <p><b>Hotel :</b> ${roomData.hotel.name}</p>
+          <p><b>Check In :</b> ${new Date(
+            booking.checkInDate
+          ).toDateString()}</p>
+          <p><b>Check Out :</b> ${new Date(
+            booking.checkOutDate
+          ).toDateString()}</p>
+          <p><b>Total :</b> $${booking.totalPrice}</p>
+
+          <hr>
+
+          <p>Thank you for booking with QuickStay.</p>
+        `,
+      });
+    } catch (mailError) {
+      console.log("Email Error:", mailError.message);
+    }
+
+    return res.json({
+      success: true,
+      bookingId: booking._id,
+      message: "Booking created successfully",
+    });
+  } catch (err) {
+    console.log("============== BOOKING ERROR ==============");
+    console.log(err);
+    console.log("===========================================");
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
 
-// ---------- GET /api/bookings/user ----------
+// ============================================================
+// GET USER BOOKINGS
+// ============================================================
+
 export const getUserBookings = async (req, res) => {
-    try {
-        const bookings = await Booking.find({ user: req.user._id })
-            .populate("room hotel")
-            .sort({ createdAt: -1 });
+  try {
+    const bookings = await Booking.find({
+      user: req.user._id,
+    })
+      .populate("room")
+      .populate("hotel")
+      .sort({
+        createdAt: -1,
+      });
 
-        res.json({ success: true, bookings });
-    } catch (error) {
-        console.error("getUserBookings error:", error.message);
-        res.status(500).json({ success: false, message: "Failed to fetch bookings" });
-    }
+    return res.json({
+      success: true,
+      bookings,
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
 
-// ---------- GET /api/bookings/hotel (owner dashboard) ----------
+// ============================================================
+// GET HOTEL BOOKINGS
+// ============================================================
+
 export const getHotelBookings = async (req, res) => {
-    try {
-        const hotel = await Hotel.findOne({ owner: req.auth.userId });
-        if (!hotel) {
-            return res.json({ success: false, message: "No hotel found for this account" });
-        }
+  try {
+    const hotel = await Hotel.findOne({
+      owner: req.user._id,
+    });
 
-        const bookings = await Booking.find({ hotel: hotel._id })
-            .populate("room hotel user")
-            .sort({ createdAt: -1 });
-
-        const totalBookings = bookings.length;
-        const totalRevenue  = bookings.reduce((acc, b) => acc + b.totalPrice, 0);
-
-        res.json({ success: true, dashboardData: { totalBookings, totalRevenue, bookings } });
-    } catch (error) {
-        console.error("getHotelBookings error:", error.message);
-        res.status(500).json({ success: false, message: "Failed to fetch bookings" });
+    if (!hotel) {
+      return res.json({
+        success: false,
+        message: "No hotel found.",
+      });
     }
+
+    const bookings = await Booking.find({
+      hotel: hotel._id,
+    })
+      .populate("room")
+      .populate("hotel")
+      .populate("user")
+      .sort({
+        createdAt: -1,
+      });
+
+    return res.json({
+      success: true,
+      dashboardData: {
+        totalBookings: bookings.length,
+        totalRevenue: bookings.reduce(
+          (sum, booking) => sum + booking.totalPrice,
+          0
+        ),
+        bookings,
+      },
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
