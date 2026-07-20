@@ -50,6 +50,18 @@ export const createCheckoutSession = async (req, res) => {
       });
     }
 
+    // -------------------------------
+    // CLIENT URL
+    // -------------------------------
+
+    const clientUrl = process.env.CLIENT_URL?.trim();
+
+    console.log("CLIENT_URL =", clientUrl);
+
+    if (!clientUrl) {
+      throw new Error("CLIENT_URL environment variable is missing");
+    }
+
     const stripe = getStripe();
 
     const session = await stripe.checkout.sessions.create({
@@ -80,9 +92,9 @@ Check Out : ${new Date(
         },
       ],
 
-      success_url: `${process.env.CLIENT_URL}/payment-success?bookingId=${booking._id}&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${clientUrl}/payment-success?bookingId=${booking._id}&session_id={CHECKOUT_SESSION_ID}`,
 
-      cancel_url: `${process.env.CLIENT_URL}/my-bookings`,
+      cancel_url: `${clientUrl}/my-bookings`,
 
       metadata: {
         bookingId: booking._id.toString(),
@@ -94,6 +106,7 @@ Check Out : ${new Date(
       success: true,
       url: session.url,
     });
+
   } catch (err) {
     console.log("========== PAYMENT ERROR ==========");
     console.log(err);
@@ -166,6 +179,7 @@ export const verifyPayment = async (req, res) => {
       success: true,
       message: "Payment verified successfully",
     });
+
   } catch (err) {
     console.log("========== VERIFY ERROR ==========");
     console.log(err);
