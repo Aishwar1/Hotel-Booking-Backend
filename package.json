@@ -1,7 +1,7 @@
 {
   "name": "quickstay",
   "version": "1.0.0",
-  "description": "QuickStay - Full-stack hotel booking platform (React + Express + MongoDB)",
+  "description": "QuickStay - Full Stack Hotel Booking Platform",
   "type": "module",
   "engines": {
     "node": "22.x"
@@ -9,7 +9,7 @@
   "scripts": {
     "start": "NODE_ENV=production node server/server.js",
     "build": "cd client && npm install && npm run build",
-    "dev:server": "cd server && node server.js",
+    "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "seed": "cd server && node seed.js"
   },

@@ -20,17 +20,13 @@ import aiRouter from "./routes/aiRoutes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// ─────────────────────────────────────────────────────────────
-// Bootstrap
-// ─────────────────────────────────────────────────────────────
+// Connect Database & Cloudinary
 connectDB();
 connectCloudinary();
 
 const app = express();
 
-// ─────────────────────────────────────────────────────────────
 // Security
-// ─────────────────────────────────────────────────────────────
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -38,19 +34,15 @@ app.use(
   })
 );
 
-// ─────────────────────────────────────────────────────────────
 // CORS
-// ─────────────────────────────────────────────────────────────
 app.use(
   cors({
-    origin: (_, cb) => cb(null, true),
+    origin: (_, callback) => callback(null, true),
     credentials: true,
   })
 );
 
-// ─────────────────────────────────────────────────────────────
 // Rate Limiting
-// ─────────────────────────────────────────────────────────────
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
@@ -61,43 +53,35 @@ const aiLimiter = rateLimit({
   max: 20,
   message: {
     success: false,
-    message: "Too many AI requests – please wait and try again.",
+    message: "Too many AI requests. Please try again later.",
   },
 });
 
 app.use("/api", generalLimiter);
 app.use("/api/ai", aiLimiter);
 
-// ─────────────────────────────────────────────────────────────
 // Clerk Webhook
-// Must come BEFORE express.json()
-// ─────────────────────────────────────────────────────────────
 app.use(
   "/api/clerk",
   express.raw({ type: "application/json" }),
   clerkWebhooks
 );
 
-// ─────────────────────────────────────────────────────────────
 // Middleware
-// ─────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(mongoSanitize());
 app.use(clerkMiddleware());
 
-// ─────────────────────────────────────────────────────────────
-// Health Check
-// ─────────────────────────────────────────────────────────────
-app.get("/api/health", (_req, res) => {
+// Health Route
+app.get("/api/health", (req, res) => {
   res.json({
-    status: "ok",
+    success: true,
+    status: "Server Running",
     timestamp: new Date().toISOString(),
   });
 });
 
-// ─────────────────────────────────────────────────────────────
 // API Routes
-// ─────────────────────────────────────────────────────────────
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
@@ -105,28 +89,28 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/ai", aiRouter);
 
-// ─────────────────────────────────────────────────────────────
-// Production - Serve React Build
-// ─────────────────────────────────────────────────────────────
+// Production
 if (process.env.NODE_ENV === "production") {
   const clientDist = path.join(__dirname, "../client/dist");
 
   app.use(express.static(clientDist));
 
-  // Express 5 compatible SPA fallback
-  app.use((req, res) => {
+  // Don't rewrite API requests
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return next();
+    }
+
     res.sendFile(path.join(clientDist, "index.html"));
   });
 } else {
-  app.get("/", (_req, res) => {
-    res.send("QuickStay API - Development Mode");
+  app.get("/", (req, res) => {
+    res.send("QuickStay API Running 🚀");
   });
 }
 
-// ─────────────────────────────────────────────────────────────
 // Global Error Handler
-// ─────────────────────────────────────────────────────────────
-app.use((err, _req, res, _next) => {
+app.use((err, req, res, next) => {
   console.error(err);
 
   res.status(err.status || 500).json({
@@ -135,11 +119,9 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────
 // Start Server
-// ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 QuickStay server running on port ${PORT}`);
+  console.log(`🚀 QuickStay Server running on port ${PORT}`);
 });
