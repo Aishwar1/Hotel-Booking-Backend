@@ -4,6 +4,7 @@ import FeaturedDestination from '../components/FeaturedDestination';
 import ExclusiveOffers    from '../components/ExclusiveOffers';
 import Testimonial        from '../components/Testimonial';
 import AITripPlanner      from '../components/AITripPlanner';
+import AISmartSearch      from '../components/AIRecommendations';
 import VibeSurprise       from '../components/VibeSurprise';
 import ExperienceSection  from '../components/ExperienceSection';
 import AboutSection       from '../components/AboutSection';
@@ -13,6 +14,7 @@ const Home = () => (
     <>
         <Hero />
         <FeaturedDestination />
+        <AISmartSearch />
         <VibeSurprise />
         <ExperienceSection />
         <ExclusiveOffers />

@@ -26,13 +26,13 @@ const HotelNotifications = () => {
   const hotel = featured[current];
 
   return (
-    <div className="fixed top-20 md:top-24 left-3 right-3 md:left-auto md:right-6 md:w-80 z-40 animate-in">
+    <div className="fixed top-16 md:top-24 left-auto right-3 md:right-6 w-60 md:w-80 z-40 animate-in">
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-xl overflow-hidden">
         <div className="flex">
           <img
             src={hotel.images?.[0]}
             alt=""
-            className="w-20 h-20 md:w-24 md:h-24 object-cover shrink-0"
+            className="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0"
           />
           <div className="flex-1 p-3 min-w-0">
             <div className="flex items-start justify-between gap-2">

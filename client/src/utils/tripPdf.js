@@ -19,7 +19,7 @@ export const downloadTripPlanPDF = (plan, destination, recommendedRoom) => {
     });
   };
 
-  addLine("QuickStay Trip Plan", 20, true);
+  addLine("TravelWithAsh Trip Plan", 20, true);
   y += 4;
   addLine(plan.title || `${destination} Adventure`, 14, true);
   y += 2;
@@ -62,5 +62,5 @@ export const downloadTripPlanPDF = (plan, destination, recommendedRoom) => {
     plan.packingList.forEach((item) => addLine(`• ${item}`, 10));
   }
 
-  doc.save(`QuickStay-Trip-${destination.replace(/\s+/g, "-")}.pdf`);
+  doc.save(`TravelWithAsh-Trip-${destination.replace(/\s+/g, "-")}.pdf`);
 };

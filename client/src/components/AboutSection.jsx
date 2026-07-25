@@ -75,12 +75,12 @@ const AboutSection = () => (
                         We Believe Every Journey<br className="hidden md:block" /> Deserves a Perfect Stay
                     </h2>
                     <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-4">
-                        QuickStay was founded in 2017 with a simple conviction: booking a luxury hotel should feel
+                        TravelWithAsh was founded with a simple conviction: planning a great trip should feel
                         as good as the stay itself. We were tired of cluttered interfaces, opaque pricing, and
                         impersonal service — so we built the alternative.
                     </p>
                     <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-8">
-                        Today, QuickStay connects discerning travellers with over 500 hand-curated properties
+                        Today, TravelWithAsh connects curious travellers with hand-curated properties
                         across 50+ countries — from boutique cliff-side retreats to five-star city icons. Every
                         property is reviewed by our team in person before it earns a place on our platform.
                     </p>

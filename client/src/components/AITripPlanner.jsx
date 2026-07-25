@@ -48,7 +48,7 @@ const AITripPlanner = () => {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-medium px-3 py-1 rounded-full mb-3">
-            AI Trip Planner
+            TRAVELWITHASH AI PLANNER
           </span>
           <h2 className="text-2xl md:text-4xl font-playfair mb-2">Plan Your Perfect Trip</h2>
           <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto">

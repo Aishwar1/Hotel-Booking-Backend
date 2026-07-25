@@ -50,7 +50,7 @@ export const chatWithAI = async (req, res) => {
     const catalog = await buildRoomCatalog();
 
     const systemPrompt = `
-You are QuickStay AI Travel Assistant.
+You are TravelWithAsh AI Travel Assistant.
 
 You help users with hotel recommendations, room booking, amenities, policies, payments, and travel tips.
 
@@ -60,7 +60,7 @@ ${JSON.stringify(catalog.slice(0, 30), null, 2)}
 Rules:
 - Be friendly, concise, and practical.
 - Never invent hotels or rooms not in the catalog above.
-- If asked about booking, guide them to search or pick a room from QuickStay.
+- If asked about booking, guide them to search or pick a room from TravelWithAsh.
 - Give travel tips relevant to cities in our catalog.
 `;
 
@@ -257,7 +257,7 @@ Budget: $${budget} total
 Interests: ${interests.length ? interests.join(", ") : "General sightseeing"}
 Check-in: ${checkInDate || "Flexible"}
 
-Hotels available on QuickStay in/near destination:
+Hotels available on TravelWithAsh in/near destination:
 ${JSON.stringify(cityRooms.slice(0, 10), null, 2)}
 
 Return ONLY valid JSON:
@@ -353,7 +353,7 @@ export const vibeSurprise = async (req, res) => {
 The user doesn't know where to go. They described their vibe/mood:
 "${vibe}"
 
-Available cities with QuickStay hotels: ${cities.join(", ")}
+Available cities with TravelWithAsh hotels: ${cities.join(", ")}
 
 Full room catalog:
 ${JSON.stringify(catalog, null, 2)}
@@ -390,12 +390,27 @@ IMPORTANT: Return exactly 2 options, from different cities, with contrasting vib
     });
 
     const parsed = parseAIJson(aiResponse.choices[0].message.content);
-    const rooms = await Room.find({ isAvailable: true }).populate("hotel");
+    const selected = [];
+    const usedCities = new Set();
+    for (const option of parsed?.options || []) {
+      const candidate = catalog[option.roomIndex];
+      if (candidate && !usedCities.has(candidate.city)) {
+        selected.push({ ...option, roomId: candidate.roomId });
+        usedCities.add(candidate.city);
+      }
+      if (selected.length === 2) break;
+    }
+    // Preserve the exactly-two promise even when the model returns duplicates.
+    for (const candidate of catalog) {
+      if (selected.length === 2) break;
+      if (!usedCities.has(candidate.city)) {
+        selected.push({ roomId: candidate.roomId, vibeMatch: "A contrasting destination chosen for your vibe.", experience: `Discover the character of ${candidate.city}.`, highlight: "A fresh alternative to your first pick" });
+        usedCities.add(candidate.city);
+      }
+    }
 
-    const options = (parsed?.options || [])
-      .slice(0, 2)
-      .map((opt) => {
-        const room = rooms[opt.roomIndex];
+    const options = (await Promise.all(selected.map(async (opt) => {
+        const room = await Room.findById(opt.roomId).populate("hotel");
         if (!room) return null;
         return {
           vibeMatch: opt.vibeMatch,
@@ -414,8 +429,7 @@ IMPORTANT: Return exactly 2 options, from different cities, with contrasting vib
             address: room.hotel?.address,
           },
         };
-      })
-      .filter(Boolean);
+      }))).filter(Boolean).slice(0, 2);
 
     return res.json({
       success: true,

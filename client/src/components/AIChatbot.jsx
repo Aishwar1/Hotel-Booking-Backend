@@ -23,7 +23,7 @@ const AIChatbot = () => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { role: "assistant", content: "Hi! I'm the QuickStay AI assistant. Ask me anything about hotels, bookings, or travel tips! 🏨" },
+        { role: "assistant", content: "Hi! I'm Ash, your TravelWithAsh AI assistant. Ask me about stays, itineraries, or travel tips! ✈️" },
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -73,12 +73,12 @@ const AIChatbot = () => {
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        <div className="fixed bottom-3 right-3 md:bottom-6 md:right-6 z-50 flex flex-col items-end gap-2 md:gap-3">
 
             {/* ---- Chat Panel ---- */}
             {isOpen && (
-                <div className="w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden"
-                    style={{ height: "480px" }}>
+                <div className="w-[calc(100vw-1.5rem)] sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden"
+                    style={{ height: "min(480px, calc(100dvh - 80px))" }}>
 
                     {/* Header */}
                     <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
@@ -87,8 +87,8 @@ const AIChatbot = () => {
                                 <span className="text-blue-600 text-sm">🤖</span>
                             </div>
                             <div>
-                                <p className="text-white font-medium text-sm">QuickStay AI</p>
-                                <p className="text-blue-200 text-xs">Hotel Assistant</p>
+                                <p className="text-white font-medium text-sm">TravelWithAsh AI</p>
+                                <p className="text-blue-200 text-xs">Your travel assistant</p>
                             </div>
                         </div>
                         <button
@@ -160,7 +160,7 @@ const AIChatbot = () => {
             {/* ---- Floating Toggle Button ---- */}
             <button
                 onClick={() => setIsOpen((prev) => !prev)}
-                className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg
+                className="w-11 h-11 md:w-14 md:h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg
                     flex items-center justify-center transition-all active:scale-95"
                 aria-label="Open AI chat"
             >

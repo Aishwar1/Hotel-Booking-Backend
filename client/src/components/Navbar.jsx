@@ -14,6 +14,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home',       path: '/' },
         { name: 'Hotels',     path: '/rooms' },
+        { name: 'Smart Search', path: '/#smart-search' },
         { name: 'Trip Planner', path: '/#trip-planner' },
         { name: 'Surprise Me', path: '/#vibe-surprise' },
         { name: 'About',      path: '/#about' },
@@ -48,7 +49,7 @@ const Navbar = () => {
             <nav className={`fixed top-0 left-0 w-full flex items-center justify-between px-4 md:px-16 lg:px-24 xl:px-32 transition-all duration-500 z-50 ${isScrolled ? "bg-white/90 shadow-md text-gray-700 backdrop-blur-lg py-2.5 md:py-3" : "py-3 md:py-5"}`}>
 
                 <Link to='/'>
-                    <img src={assets.logo} alt="logo" className={`h-7 md:h-9 ${isScrolled && "invert opacity-80"}`} />
+                    <span className={`font-playfair font-bold text-lg md:text-2xl tracking-tight ${isScrolled ? "text-slate-900" : "text-white"}`}>TravelWithAsh</span>
                 </Link>
 
                 <div className="hidden lg:flex items-center gap-5 xl:gap-7">

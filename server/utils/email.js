@@ -4,7 +4,7 @@ export const sendBookingCreatedEmail = ({ to, name, hotelName, checkInDate, chec
   return transporter.sendMail({
     from: process.env.SENDER_EMAIL,
     to,
-    subject: "QuickStay Booking Confirmation",
+    subject: "TravelWithAsh Booking Confirmation",
     html: `
       <h2>Booking Confirmed 🎉</h2>
       <p>Hello <b>${name}</b>,</p>
@@ -16,7 +16,7 @@ export const sendBookingCreatedEmail = ({ to, name, hotelName, checkInDate, chec
       <p><b>Total:</b> $${totalPrice}</p>
       <p><b>Payment:</b> ${paymentMethod}</p>
       <hr>
-      <p>Thank you for choosing QuickStay ❤️</p>
+      <p>Thank you for choosing TravelWithAsh ❤️</p>
     `,
   });
 };
@@ -25,7 +25,7 @@ export const sendPaymentConfirmationEmail = ({ to, name, hotelName, roomType, ch
   return transporter.sendMail({
     from: process.env.SENDER_EMAIL,
     to,
-    subject: "QuickStay Payment Confirmed",
+    subject: "TravelWithAsh Payment Confirmed",
     html: `
       <h2>Payment Successful ✅</h2>
       <p>Hello <b>${name}</b>,</p>
@@ -37,7 +37,7 @@ export const sendPaymentConfirmationEmail = ({ to, name, hotelName, roomType, ch
       <p><b>Check Out:</b> ${new Date(checkOutDate).toDateString()}</p>
       <p><b>Amount Paid:</b> $${totalPrice}</p>
       <hr>
-      <p>We look forward to hosting you at QuickStay ❤️</p>
+      <p>We look forward to hosting you with TravelWithAsh ❤️</p>
     `,
   });
 };
@@ -46,7 +46,7 @@ export const sendBookingCancelledEmail = ({ to, name, hotelName, checkInDate, ch
   return transporter.sendMail({
     from: process.env.SENDER_EMAIL,
     to,
-    subject: "QuickStay Booking Cancelled",
+    subject: "TravelWithAsh Booking Cancelled",
     html: `
       <h2>Booking Cancelled</h2>
       <p>Hello <b>${name}</b>,</p>

@@ -122,7 +122,7 @@ if (process.env.NODE_ENV === "production") {
   });
 } else {
   app.get("/", (req, res) => {
-    res.send("🚀 QuickStay API Running");
+    res.send("TravelWithAsh API Running");
   });
 }
 
@@ -151,5 +151,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 QuickStay Server running on port ${PORT}`);
+  console.log(`TravelWithAsh Server running on port ${PORT}`);
 });

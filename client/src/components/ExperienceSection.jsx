@@ -84,7 +84,7 @@ const ExperienceSection = () => (
                     Crafted For You
                 </p>
                 <h2 className="font-playfair text-3xl md:text-5xl font-bold text-gray-900">
-                    The QuickStay Experience
+                    The TravelWithAsh Experience
                 </h2>
                 <p className="text-gray-500 mt-4 max-w-2xl mx-auto text-sm md:text-base">
                     We don't just book rooms — we curate journeys. Every stay is elevated with
