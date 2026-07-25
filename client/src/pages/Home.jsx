@@ -13,9 +13,9 @@ import NewsLetter         from '../components/NewsLetter';
 const Home = () => (
     <>
         <Hero />
-        <FeaturedDestination />
         <AISmartSearch />
         <VibeSurprise />
+        <FeaturedDestination />
         <ExperienceSection />
         <ExclusiveOffers />
         <Testimonial />

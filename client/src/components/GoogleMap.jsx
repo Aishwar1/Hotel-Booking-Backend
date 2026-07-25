@@ -16,7 +16,7 @@ const GoogleMap = ({ hotel }) => {
   }
 
   return (
-    <div className="w-full h-80 my-10 rounded-lg overflow-hidden border shadow-sm">
+    <div className="w-full h-64 md:h-80 my-8 rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
       <iframe
         title={`Map of ${hotel.name}`}
         src={mapSrc}

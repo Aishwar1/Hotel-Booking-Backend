@@ -17,20 +17,20 @@ const Layout = () => {
 
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col min-h-screen bg-slate-50">
 
       {/* Navbar */}
       <Navbar />
 
-      <div className="flex h-full">
+      <div className="flex flex-1 min-h-0">
 
         {/* Sidebar */}
         <Sidebar />
 
         {/* Main content area */}
-        <div className="flex-1 p-4 pt-10 md:px-10 h-full">
+        <main className="flex-1 min-w-0 overflow-y-auto p-4 pt-8 md:p-8 lg:p-10">
           <Outlet />
-        </div>
+        </main>
 
       </div>
     </div>

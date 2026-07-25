@@ -13,7 +13,8 @@ const HotelCard = ({ room, index }) => {
     >
       <img
         src={room.images?.[0] || assets.placeholderImage}
-        alt=""
+        alt={room.hotel?.name || "Hotel room"}
+        className="w-full h-48 object-cover"
       />
 
       {index % 2 === 0 && (

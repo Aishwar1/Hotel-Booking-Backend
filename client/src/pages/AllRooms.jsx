@@ -112,7 +112,7 @@ const AllRooms = () => {
       </div>
 
       {/* Results */}
-      <div className="max-w-5xl">
+      <div className="max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-x-8">
         {displayRooms.length === 0 && (
           <p className="text-gray-500 py-12 text-center">No rooms found. Try a different search.</p>
         )}
@@ -120,13 +120,13 @@ const AllRooms = () => {
         {displayRooms.map((room) => (
           <div
             key={room._id}
-            className="flex flex-col md:flex-row items-start py-8 gap-4 md:gap-6 border-b border-gray-200 last:border-0"
+            className="flex flex-col sm:flex-row items-start py-6 gap-4 border-b border-gray-200 last:border-0"
           >
             <img
               onClick={() => { navigate(`/rooms/${room._id}`); window.scrollTo(0, 0); }}
               src={room.images[0]}
               alt=""
-              className="w-full md:w-72 h-48 md:h-52 rounded-xl shadow-md object-cover cursor-pointer shrink-0"
+              className="w-full sm:w-44 lg:w-48 h-40 rounded-xl shadow-sm object-cover cursor-pointer shrink-0"
             />
             <div className="flex-1 flex flex-col gap-1.5 min-w-0">
               <p className="text-gray-500 text-sm">{room.hotel?.city}</p>

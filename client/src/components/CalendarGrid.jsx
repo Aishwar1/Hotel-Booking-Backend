@@ -124,7 +124,7 @@ const CalendarGrid = ({
               disabled={isPast || isBooked}
               onClick={() => onDateClick?.(key)}
               className={`aspect-square rounded-md border text-center flex items-center justify-center transition-all
-                ${compact ? "text-[10px]" : "text-xs"}
+                ${compact ? "text-[10px] min-h-9" : "text-xs"}
                 ${cellClass}
                 ${!isPast && !isBooked && onDateClick ? "hover:ring-2 hover:ring-blue-300 cursor-pointer" : "cursor-default"}
               `}

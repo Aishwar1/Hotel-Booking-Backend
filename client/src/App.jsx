@@ -58,7 +58,7 @@ const App = () => {
                 </Routes>
             </div>
 
-            <Footer />
+            {!isOwnerPath && <Footer />}
 
             {!isOwnerPath && <HotelNotifications />}
             {!isOwnerPath && <AIChatbot />}

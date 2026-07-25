@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { assets, facilityIcons, roomCommonData } from "../assets/assets";
 import StarRating from "../components/StarRating";
-import LeafletMap from "../components/LeafletMap";
+import GoogleMap from "../components/GoogleMap";
 import ReviewsSection from "../components/ReviewsSection";
 import AvailabilityCalendar from "../components/AvailabilityCalendar";
 import { useAppContext } from "../context/AppContext";
@@ -353,7 +353,7 @@ const RoomDetails = () => {
             </div>
 
             {/* ---- OpenStreetMap ---- */}
-            <LeafletMap hotel={room.hotel} />
+            <GoogleMap hotel={room.hotel} />
 
             {/* ---- Availability Calendar ---- */}
             <AvailabilityCalendar
