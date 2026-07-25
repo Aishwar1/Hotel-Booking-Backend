@@ -40,6 +40,8 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false          # Optional — geocodes hotel address on registration
 
       # ─── Non-secret config — set once after first deploy ─────────────────────
       - key: NODE_ENV

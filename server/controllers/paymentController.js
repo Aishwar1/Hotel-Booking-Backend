@@ -1,5 +1,7 @@
 import Stripe from "stripe";
 import Booking from "../models/Booking.js";
+import User from "../models/User.js";
+import { sendPaymentConfirmationEmail } from "../utils/email.js";
 
 const getStripe = () => {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -154,7 +156,9 @@ export const verifyPayment = async (req, res) => {
       });
     }
 
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId)
+      .populate("room")
+      .populate("hotel");
 
     if (!booking) {
       return res.status(404).json({
@@ -172,8 +176,24 @@ export const verifyPayment = async (req, res) => {
 
     booking.isPaid = true;
     booking.paymentMethod = "Stripe";
+    booking.status = "confirmed";
 
     await booking.save();
+
+    const user = await User.findById(userId);
+    if (user?.email) {
+      sendPaymentConfirmationEmail({
+        to: user.email,
+        name: user.name,
+        hotelName: booking.hotel?.name || "Hotel",
+        roomType: booking.room?.roomType || "Room",
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+        totalPrice: booking.totalPrice,
+      })
+        .then(() => console.log("Payment confirmation email sent"))
+        .catch((err) => console.log("Email Error:", err.message));
+    }
 
     return res.json({
       success: true,

@@ -14,7 +14,7 @@ const ALLOWED_AMENITIES  = ["Free WiFi", "Free Breakfast", "Room Service", "Moun
 export const createRoom = async (req, res) => {
     const uploadedPaths = [];
     try {
-        const hotel = await Hotel.findOne({ owner: req.auth.userId });
+        const hotel = await Hotel.findOne({ owner: req.user._id });
         if (!hotel) {
             return res.status(400).json({ success: false, message: "No hotel found. Register a hotel first." });
         }
@@ -92,7 +92,7 @@ export const getRooms = async (req, res) => {
 // GET /api/rooms/owner  — Owner's rooms only
 export const getOwnerRooms = async (req, res) => {
     try {
-        const hotelData = await Hotel.findOne({ owner: req.auth.userId });
+        const hotelData = await Hotel.findOne({ owner: req.user._id });
         if (!hotelData) {
             return res.json({ success: true, rooms: [] });
         }
@@ -116,7 +116,7 @@ export const toggleRoomAvailability = async (req, res) => {
         }
 
         // Verify this room belongs to the owner's hotel
-        const hotel = await Hotel.findOne({ owner: req.auth.userId });
+        const hotel = await Hotel.findOne({ owner: req.user._id });
         if (!hotel) {
             return res.status(403).json({ success: false, message: "No hotel found for this account" });
         }

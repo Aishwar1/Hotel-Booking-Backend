@@ -1,5 +1,6 @@
 import Hotel from "../models/Hotel.js";
 import User from "../models/User.js";
+import { geocodeAddress } from "../utils/geocode.js";
 
 // ============================================================
 // Register Hotel
@@ -38,12 +39,15 @@ export const registerHotel = async (req, res) => {
       });
     }
 
+    const coords = await geocodeAddress(address.trim(), city.trim());
+
     const hotel = await Hotel.create({
       name: name.trim(),
       address: address.trim(),
       contact: contact.trim(),
       city: city.trim(),
       owner,
+      ...(coords && { latitude: coords.latitude, longitude: coords.longitude }),
     });
 
     await User.findByIdAndUpdate(owner, {

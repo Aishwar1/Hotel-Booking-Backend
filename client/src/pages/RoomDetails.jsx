@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { assets, facilityIcons, roomCommonData } from "../assets/assets";
 import StarRating from "../components/StarRating";
-import fakeMap from '../assets/doctor on demand.png';
+import GoogleMap from "../components/GoogleMap";
+import ReviewsSection from "../components/ReviewsSection";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 
@@ -32,6 +33,7 @@ const RoomDetails = () => {
     // NEW: payment method selector
     const [paymentMethod, setPaymentMethod] = useState("Pay At Hotel");
     const [isBooking, setIsBooking] = useState(false);
+    const [reviewStats, setReviewStats] = useState({ avgRating: 0, totalReviews: 0 });
 
     // ---- Find the room in the global rooms list ----
     useEffect(() => {
@@ -46,6 +48,21 @@ const RoomDetails = () => {
     useEffect(() => {
         setIsAvailable(false);
     }, [checkInDate, checkOutDate, guests]);
+
+    useEffect(() => {
+        const loadReviewStats = async () => {
+            if (!id) return;
+            try {
+                const { data } = await axios.get(`/api/reviews/room/${id}`);
+                if (data.success) {
+                    setReviewStats({ avgRating: data.avgRating, totalReviews: data.totalReviews });
+                }
+            } catch {
+                // Non-critical
+            }
+        };
+        loadReviewStats();
+    }, [id, axios]);
 
     // ---- Step 1: Check availability ----
     const checkAvailability = async () => {
@@ -149,8 +166,12 @@ const RoomDetails = () => {
 
             {/* ---- Rating ---- */}
             <div className="flex items-center gap-1 mt-2">
-                <StarRating />
-                <p className="ml-2">200+ reviews</p>
+                <StarRating rating={Math.round(reviewStats.avgRating) || 4} />
+                <p className="ml-2">
+                    {reviewStats.totalReviews > 0
+                        ? `${reviewStats.avgRating} · ${reviewStats.totalReviews} reviews`
+                        : "No reviews yet"}
+                </p>
             </div>
 
             {/* ---- Address ---- */}
@@ -330,10 +351,11 @@ const RoomDetails = () => {
                     accurately to get the exact price for groups.</p>
             </div>
 
-            {/* ---- Map placeholder ---- */}
-            <div className="w-full h-80 my-10 rounded-lg overflow-hidden border">
-                <img src={fakeMap} alt="Map Placeholder" className="w-full h-full object-cover" />
-            </div>
+            {/* ---- Google Map ---- */}
+            <GoogleMap hotel={room.hotel} />
+
+            {/* ---- Reviews ---- */}
+            <ReviewsSection roomId={room._id} hotelId={room.hotel?._id} />
 
             {/* ---- Host info ---- */}
             <div className="flex flex-col items-start gap-4">
@@ -342,8 +364,12 @@ const RoomDetails = () => {
                     <div>
                         <p className="text-lg md:text-xl">Hosted by {room.hotel?.name}</p>
                         <div className="flex items-center mt-1">
-                            <StarRating />
-                            <p className="ml-2">200+ reviews</p>
+                            <StarRating rating={Math.round(reviewStats.avgRating) || 4} />
+                            <p className="ml-2">
+                                {reviewStats.totalReviews > 0
+                                    ? `${reviewStats.totalReviews} reviews`
+                                    : "New listing"}
+                            </p>
                         </div>
                     </div>
                 </div>

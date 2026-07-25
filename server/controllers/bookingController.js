@@ -1,7 +1,10 @@
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
-import transporter from "../configs/nodemailer.js";
+import {
+  sendBookingCreatedEmail,
+  sendBookingCancelledEmail,
+} from "../utils/email.js";
 
 // ============================================================
 // Helper - Check Room Availability
@@ -10,6 +13,7 @@ import transporter from "../configs/nodemailer.js";
 const checkAvailability = async ({ room, checkInDate, checkOutDate }) => {
   const bookings = await Booking.find({
     room,
+    status: { $ne: "cancelled" },
     checkInDate: { $lt: new Date(checkOutDate) },
     checkOutDate: { $gt: new Date(checkInDate) },
   });
@@ -113,48 +117,23 @@ export const createBooking = async (req, res) => {
       totalPrice: roomData.pricePerNight * nights,
       paymentMethod,
       isPaid: false,
+      status: paymentMethod === "Pay At Hotel" ? "confirmed" : "pending",
     });
 
-    // -----------------------------
-    // Send email in background
-    // -----------------------------
-    transporter
-      .sendMail({
-        from: process.env.SENDER_EMAIL,
+    // Send email for Pay At Hotel bookings (Stripe sends after payment)
+    if (paymentMethod === "Pay At Hotel") {
+      sendBookingCreatedEmail({
         to: req.user.email,
-        subject: "QuickStay Booking Confirmation",
-        html: `
-          <h2>Booking Confirmed 🎉</h2>
-
-          <p>Hello <b>${req.user.name}</b>,</p>
-
-          <p>Your booking has been created successfully.</p>
-
-          <hr>
-
-          <p><b>Hotel:</b> ${roomData.hotel.name}</p>
-
-          <p><b>Check In:</b> ${new Date(
-            booking.checkInDate
-          ).toDateString()}</p>
-
-          <p><b>Check Out:</b> ${new Date(
-            booking.checkOutDate
-          ).toDateString()}</p>
-
-          <p><b>Total:</b> $${booking.totalPrice}</p>
-
-          <hr>
-
-          <p>Thank you for choosing QuickStay ❤️</p>
-        `,
+        name: req.user.name,
+        hotelName: roomData.hotel.name,
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+        totalPrice: booking.totalPrice,
+        paymentMethod,
       })
-      .then(() => {
-        console.log("Booking email sent");
-      })
-      .catch((err) => {
-        console.log("Email Error:", err.message);
-      });
+        .then(() => console.log("Booking email sent"))
+        .catch((err) => console.log("Email Error:", err.message));
+    }
 
     // IMPORTANT:
     // Return immediately without waiting for email
@@ -245,6 +224,81 @@ export const getHotelBookings = async (req, res) => {
   } catch (err) {
     console.log(err);
 
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// ============================================================
+// POST /api/bookings/cancel
+// ============================================================
+
+export const cancelBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking ID is required",
+      });
+    }
+
+    const booking = await Booking.findById(bookingId)
+      .populate("hotel")
+      .populate("room");
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    if (booking.user !== req.user._id) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only cancel your own bookings",
+      });
+    }
+
+    if (booking.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Booking is already cancelled",
+      });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (new Date(booking.checkInDate) < today) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot cancel a booking that has already started",
+      });
+    }
+
+    booking.status = "cancelled";
+    await booking.save();
+
+    sendBookingCancelledEmail({
+      to: req.user.email,
+      name: req.user.name,
+      hotelName: booking.hotel?.name || "Hotel",
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+    })
+      .then(() => console.log("Cancellation email sent"))
+      .catch((err) => console.log("Email Error:", err.message));
+
+    return res.json({
+      success: true,
+      message: "Booking cancelled successfully",
+    });
+  } catch (err) {
+    console.error("cancelBooking error:", err.message);
     return res.status(500).json({
       success: false,
       message: err.message,
