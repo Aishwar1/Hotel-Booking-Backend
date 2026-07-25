@@ -1,21 +1,22 @@
 /**
- * Geocode an address using Google Geocoding API.
- * Returns { latitude, longitude } or null if geocoding fails or API key is missing.
+ * Geocode an address using OpenStreetMap Nominatim (free, no API key).
+ * Returns { latitude, longitude } or null if geocoding fails.
  */
 export const geocodeAddress = async (address, city) => {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) return null;
-
   const query = encodeURIComponent(`${address}, ${city}`);
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}`;
+  const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { "User-Agent": "QuickStay-HotelBooking/1.0" },
+    });
     const data = await response.json();
 
-    if (data.status === "OK" && data.results?.[0]?.geometry?.location) {
-      const { lat, lng } = data.results[0].geometry.location;
-      return { latitude: lat, longitude: lng };
+    if (data?.[0]?.lat && data?.[0]?.lon) {
+      return {
+        latitude: parseFloat(data[0].lat),
+        longitude: parseFloat(data[0].lon),
+      };
     }
   } catch (err) {
     console.error("Geocoding error:", err.message);

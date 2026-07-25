@@ -98,13 +98,13 @@ const Hero = () => {
                     Start your journey today.
                 </p>
 
-                {/* Search form */}
-                <form onSubmit={onSearch} className='bg-white text-gray-500 rounded-lg px-6 py-4 mt-8 flex flex-col md:flex-row max-md:items-start gap-4 max-md:mx-auto'>
+                {/* Search form — compact on mobile */}
+                <form onSubmit={onSearch} className='bg-white text-gray-500 rounded-xl px-4 py-3 md:px-6 md:py-4 mt-6 md:mt-8 flex flex-col md:flex-row max-md:items-stretch gap-3 md:gap-4 max-w-4xl'>
 
-                    <div>
-                        <div className='flex items-center gap-2'>
-                            <img src={assets.calenderIcon} alt="" className='h-4' />
-                            <label htmlFor="destinationInput">Destination</label>
+                    <div className="flex-1 min-w-0">
+                        <div className='flex items-center gap-1.5'>
+                            <img src={assets.locationIcon} alt="" className='h-3.5 w-3.5 opacity-60' />
+                            <label htmlFor="destinationInput" className="text-xs md:text-sm">Destination</label>
                         </div>
                         <input
                             onChange={e => setDestination(e.target.value)}
@@ -112,8 +112,8 @@ const Hero = () => {
                             list='destinations'
                             id="destinationInput"
                             type="text"
-                            className="rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none"
-                            placeholder="Type here"
+                            className="w-full rounded border border-gray-200 px-3 py-1.5 mt-1 text-sm outline-none"
+                            placeholder="Where to?"
                             required
                         />
                         <datalist id='destinations'>
@@ -121,29 +121,23 @@ const Hero = () => {
                         </datalist>
                     </div>
 
-                    <div>
-                        <div className='flex items-center gap-2'>
-                            <img src={assets.calenderIcon} alt="" className='h-4' />
-                            <label htmlFor="checkIn">Check in</label>
+                    <div className="grid grid-cols-3 gap-2 md:flex md:gap-4">
+                        <div>
+                            <label htmlFor="checkIn" className="text-xs md:text-sm">Check in</label>
+                            <input id="checkIn" type="date" className="w-full rounded border border-gray-200 px-2 py-1.5 mt-1 text-xs md:text-sm outline-none" />
                         </div>
-                        <input id="checkIn" type="date" className="rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none" />
-                    </div>
-
-                    <div>
-                        <div className='flex items-center gap-2'>
-                            <img src={assets.calenderIcon} alt="" className='h-4' />
-                            <label htmlFor="checkOut">Check out</label>
+                        <div>
+                            <label htmlFor="checkOut" className="text-xs md:text-sm">Check out</label>
+                            <input id="checkOut" type="date" className="w-full rounded border border-gray-200 px-2 py-1.5 mt-1 text-xs md:text-sm outline-none" />
                         </div>
-                        <input id="checkOut" type="date" className="rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none" />
+                        <div>
+                            <label htmlFor="guests" className="text-xs md:text-sm">Guests</label>
+                            <input min={1} max={4} id="guests" type="number" defaultValue={1} className="w-full rounded border border-gray-200 px-2 py-1.5 mt-1 text-xs md:text-sm outline-none" />
+                        </div>
                     </div>
 
-                    <div className='flex md:flex-col max-md:gap-2 max-md:items-center'>
-                        <label htmlFor="guests">Guests</label>
-                        <input min={1} max={4} id="guests" type="number" className="rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none max-w-16" placeholder="0" />
-                    </div>
-
-                    <button className='flex items-center justify-center gap-1 rounded-md bg-black py-3.5 px-7 text-white my-2.5 cursor-pointer max-md:w-full max-md:py-2'>
-                        <img src={assets.searchIcon} alt="search" className='h-5' />
+                    <button className='flex items-center justify-center gap-1.5 rounded-lg bg-black py-2.5 md:py-3.5 px-5 md:px-7 text-white text-sm cursor-pointer md:self-end shrink-0'>
+                        <img src={assets.searchIcon} alt="" className='h-4 w-4 invert' />
                         <span>Search</span>
                     </button>
                 </form>

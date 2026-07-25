@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';          // Direct import — toast is not 
 import Title from '../../components/Title';
 import { assets } from '../../assets/assets';
 import { useAppContext } from '../../context/AppContext';
+import OwnerCalendar from '../../components/OwnerCalendar';
 
 const Dashboard = () => {
     const { currency, user, getToken, axios } = useAppContext();
@@ -108,6 +109,8 @@ const Dashboard = () => {
                     </tbody>
                 </table>
             </div>
+
+            <OwnerCalendar bookings={dashboardData.bookings} />
         </div>
     );
 };

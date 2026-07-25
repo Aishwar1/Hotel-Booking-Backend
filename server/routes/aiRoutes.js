@@ -1,19 +1,20 @@
 import express from "express";
-import { chatWithAI, getAIRecommendations } from "../controllers/aiController.js";
-
-// ============================================================
-// AI ROUTES  (NEW)
-// ============================================================
-// POST /api/ai/chat       → Chatbot conversation
-// POST /api/ai/recommend  → Hotel recommendation engine
-//
-// These routes are public (no auth required) so guests can
-// use the chatbot and recommendations before signing in.
-// ============================================================
+import {
+  chatWithAI,
+  getAIRecommendations,
+  smartSearch,
+  tripPlanner,
+  vibeSurprise,
+  getFeaturedHotels,
+} from "../controllers/aiController.js";
 
 const aiRouter = express.Router();
 
 aiRouter.post("/chat", chatWithAI);
 aiRouter.post("/recommend", getAIRecommendations);
+aiRouter.post("/smart-search", smartSearch);
+aiRouter.post("/trip-planner", tripPlanner);
+aiRouter.post("/vibe-surprise", vibeSurprise);
+aiRouter.get("/featured", getFeaturedHotels);
 
 export default aiRouter;

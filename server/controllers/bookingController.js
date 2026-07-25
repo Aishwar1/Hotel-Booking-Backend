@@ -305,3 +305,30 @@ export const cancelBooking = async (req, res) => {
     });
   }
 };
+
+// ============================================================
+// GET /api/bookings/room/:roomId/dates
+// ============================================================
+
+export const getRoomBookedDates = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    const bookings = await Booking.find({
+      room: roomId,
+      status: { $ne: "cancelled" },
+      checkOutDate: { $gte: new Date() },
+    }).select("checkInDate checkOutDate status");
+
+    return res.json({
+      success: true,
+      bookings,
+    });
+  } catch (err) {
+    console.error("getRoomBookedDates error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};

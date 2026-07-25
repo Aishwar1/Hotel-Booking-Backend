@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { assets, facilityIcons, roomCommonData } from "../assets/assets";
 import StarRating from "../components/StarRating";
-import GoogleMap from "../components/GoogleMap";
+import LeafletMap from "../components/LeafletMap";
 import ReviewsSection from "../components/ReviewsSection";
+import AvailabilityCalendar from "../components/AvailabilityCalendar";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 
@@ -351,8 +352,20 @@ const RoomDetails = () => {
                     accurately to get the exact price for groups.</p>
             </div>
 
-            {/* ---- Google Map ---- */}
-            <GoogleMap hotel={room.hotel} />
+            {/* ---- OpenStreetMap ---- */}
+            <LeafletMap hotel={room.hotel} />
+
+            {/* ---- Availability Calendar ---- */}
+            <AvailabilityCalendar
+                roomId={room._id}
+                checkInDate={checkInDate}
+                checkOutDate={checkOutDate}
+                onSelectDates={(checkIn, checkOut) => {
+                    setCheckInDate(checkIn);
+                    setCheckOutDate(checkOut);
+                    setIsAvailable(false);
+                }}
+            />
 
             {/* ---- Reviews ---- */}
             <ReviewsSection roomId={room._id} hotelId={room.hotel?._id} />

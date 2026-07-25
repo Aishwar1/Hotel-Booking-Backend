@@ -11,8 +11,9 @@ import Layout from "./pages/hotelOwner/Layout"
 import Dashboard from "./pages/hotelOwner/Dashboard"
 import AddRoom from "./pages/hotelOwner/AddRoom"
 import ListRoom from "./pages/hotelOwner/ListRoom"
-import PaymentSuccess from "./pages/PaymentSuccess"         // NEW: Stripe payment result page
-import AIChatbot from "./components/AIChatbot"              // NEW: Floating AI chat widget
+import PaymentSuccess from "./pages/PaymentSuccess"
+import AIChatbot from "./components/AIChatbot"
+import HotelNotifications from "./components/HotelNotifications"
 import { Toaster } from 'react-hot-toast'
 import { useAppContext } from "./context/AppContext"
 
@@ -59,8 +60,8 @@ const App = () => {
 
             <Footer />
 
-            {/* ---- AI Chat widget (floats in bottom-right corner) ---- */}
-            {!isOwnerPath && <AIChatbot />}    {/* NEW */}
+            {!isOwnerPath && <HotelNotifications />}
+            {!isOwnerPath && <AIChatbot />}
         </div>
     );
 };
