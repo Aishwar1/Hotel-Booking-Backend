@@ -18,6 +18,7 @@ const PaymentSuccess = () => {
     const { axios, getToken, navigate } = useAppContext();
 
     const [status, setStatus] = useState("verifying"); // "verifying" | "success" | "failed"
+    const [emailMessage, setEmailMessage] = useState("");
 
     useEffect(() => {
         const verify = async () => {
@@ -38,6 +39,7 @@ const PaymentSuccess = () => {
 
                 if (data.success) {
                     setStatus("success");
+                    setEmailMessage(data.emailMessage || "");
                 } else {
                     setStatus("failed");
                     toast.error(data.message);
@@ -74,7 +76,7 @@ const PaymentSuccess = () => {
                         </div>
                         <h1 className="text-3xl font-playfair mb-3 text-green-700">Payment Successful!</h1>
                         <p className="text-gray-500 mb-8">
-                            Your booking is confirmed and paid. You'll receive a confirmation email shortly.
+                            Your booking is confirmed and paid. {emailMessage || "Your confirmation email is being prepared."}
                         </p>
                         <div className="flex gap-4 justify-center">
                             <button

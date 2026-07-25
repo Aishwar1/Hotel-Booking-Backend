@@ -27,7 +27,9 @@ import { useAppContext } from "./context/AppContext"
 
 const App = () => {
 
-    const isOwnerPath = useLocation().pathname.includes("owner");
+    const pathname = useLocation().pathname;
+    const isOwnerPath = pathname.includes("owner");
+    const isHomePath = pathname === "/";
     const { showHotelReg } = useAppContext();
 
     return (
@@ -60,7 +62,7 @@ const App = () => {
 
             {!isOwnerPath && <Footer />}
 
-            {!isOwnerPath && <HotelNotifications />}
+            {isHomePath && <HotelNotifications />}
             {!isOwnerPath && <AIChatbot />}
         </div>
     );
