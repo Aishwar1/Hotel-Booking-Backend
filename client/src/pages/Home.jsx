@@ -13,13 +13,13 @@ import NewsLetter         from '../components/NewsLetter';
 const Home = () => (
     <>
         <Hero />
+        <AITripPlanner />
         <AISmartSearch />
         <VibeSurprise />
         <FeaturedDestination />
         <ExperienceSection />
         <ExclusiveOffers />
         <Testimonial />
-        <AITripPlanner />
         <AboutSection />
         <NewsLetter />
     </>

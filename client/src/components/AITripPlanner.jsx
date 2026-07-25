@@ -52,58 +52,18 @@ const AITripPlanner = () => {
           </span>
           <h2 className="text-2xl md:text-4xl font-playfair mb-2">Plan Your Perfect Trip</h2>
           <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto">
-            Get a detailed day-by-day itinerary with budget breakdown, packing list, and hotel recommendation.
+            Fill in your destination, travel length, total trip budget, and group size. Ash will create a day-by-day itinerary with a stay recommendation.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-gray-50 rounded-2xl p-4 md:p-8 border border-gray-100">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            <input
-              type="text"
-              placeholder="Destination (city)"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            />
-            <input
-              type="number"
-              min={1}
-              max={14}
-              value={days}
-              onChange={(e) => setDays(e.target.value)}
-              placeholder="Days"
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            />
-            <input
-              type="number"
-              min={100}
-              value={budget}
-              onChange={(e) => setBudget(e.target.value)}
-              placeholder={`Budget (${currency})`}
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            />
-            <input
-              type="number"
-              min={1}
-              value={travelers}
-              onChange={(e) => setTravelers(e.target.value)}
-              placeholder="Travelers"
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            />
-            <input
-              type="date"
-              value={checkInDate}
-              onChange={(e) => setCheckInDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            />
-            <input
-              type="text"
-              value={interests}
-              onChange={(e) => setInterests(e.target.value)}
-              placeholder="Interests (food, beaches, culture)"
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-400 sm:col-span-2 lg:col-span-1"
-            />
+            <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">Destination / city <input required type="text" placeholder="e.g. Dubai or London" value={destination} onChange={(e) => setDestination(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-normal outline-none focus:border-blue-400" /></label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">Trip length (days) <input required type="number" min={1} max={14} value={days} onChange={(e) => setDays(e.target.value)} placeholder="e.g. 5" className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-normal outline-none focus:border-blue-400" /></label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">Total trip budget ({currency}) <input required type="number" min={100} value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="For the entire trip, e.g. 2000" className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-normal outline-none focus:border-blue-400" /></label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">Number of travellers <input required type="number" min={1} value={travelers} onChange={(e) => setTravelers(e.target.value)} placeholder="e.g. 2 people" className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-normal outline-none focus:border-blue-400" /></label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">Departure / check-in date <input type="date" value={checkInDate} onChange={(e) => setCheckInDate(e.target.value)} min={new Date().toISOString().split("T")[0]} className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-normal outline-none focus:border-blue-400" /></label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">What do you enjoy? <input type="text" value={interests} onChange={(e) => setInterests(e.target.value)} placeholder="e.g. food, beaches, museums" className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-normal outline-none focus:border-blue-400 sm:col-span-2 lg:col-span-1" /></label>
           </div>
 
           <button
