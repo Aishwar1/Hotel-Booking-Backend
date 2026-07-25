@@ -2,7 +2,7 @@ import transporter from "../configs/nodemailer.js";
 
 export const sendBookingCreatedEmail = ({ to, name, hotelName, checkInDate, checkOutDate, totalPrice, paymentMethod }) => {
   return transporter.sendMail({
-    from: process.env.SENDER_EMAIL,
+    from: `${process.env.SENDER_NAME || "TravelWithAsh"} <${process.env.SENDER_EMAIL}>`,
     to,
     subject: "TravelWithAsh Booking Confirmation",
     html: `
@@ -23,7 +23,7 @@ export const sendBookingCreatedEmail = ({ to, name, hotelName, checkInDate, chec
 
 export const sendPaymentConfirmationEmail = ({ to, name, hotelName, roomType, checkInDate, checkOutDate, totalPrice }) => {
   return transporter.sendMail({
-    from: process.env.SENDER_EMAIL,
+    from: `${process.env.SENDER_NAME || "TravelWithAsh"} <${process.env.SENDER_EMAIL}>`,
     to,
     subject: "TravelWithAsh Payment Confirmed",
     html: `
@@ -44,7 +44,7 @@ export const sendPaymentConfirmationEmail = ({ to, name, hotelName, roomType, ch
 
 export const sendBookingCancelledEmail = ({ to, name, hotelName, checkInDate, checkOutDate }) => {
   return transporter.sendMail({
-    from: process.env.SENDER_EMAIL,
+    from: `${process.env.SENDER_NAME || "TravelWithAsh"} <${process.env.SENDER_EMAIL}>`,
     to,
     subject: "TravelWithAsh Booking Cancelled",
     html: `

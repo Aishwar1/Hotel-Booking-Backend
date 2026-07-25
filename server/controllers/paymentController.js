@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import Booking from "../models/Booking.js";
-import User from "../models/User.js";
 import { sendPaymentConfirmationEmail } from "../utils/email.js";
 
 const getStripe = () => {
@@ -181,41 +180,46 @@ export const verifyPayment = async (req, res) => {
 
     await booking.save();
 
-    let emailSent = Boolean(booking.paymentEmailSentAt);
-    let emailMessage = "Confirmation email already sent.";
-    if (!emailSent) {
-      const user = await User.findById(userId);
-      const recipient = user?.email || session.customer_details?.email;
-      if (recipient) {
-        try {
-          await sendPaymentConfirmationEmail({
-            to: recipient,
-            name: user?.name || session.customer_details?.name || "Traveller",
-            hotelName: booking.hotel?.name || "Hotel",
-            roomType: booking.room?.roomType || "Room",
-            checkInDate: booking.checkInDate,
-            checkOutDate: booking.checkOutDate,
-            totalPrice: booking.totalPrice,
-          });
-          booking.paymentEmailSentAt = new Date();
-          await booking.save();
-          emailSent = true;
-          emailMessage = "Confirmation email sent.";
-        } catch (emailError) {
-          console.error("Payment confirmation email failed:", emailError.message);
-          emailMessage = "Payment is confirmed, but the confirmation email could not be sent.";
-        }
-      } else {
-        emailMessage = "Payment is confirmed, but no recipient email was available.";
-      }
+    const shouldSendEmail = !booking.paymentEmailSentAt && !booking.paymentEmailQueuedAt;
+    if (shouldSendEmail) {
+      booking.paymentEmailQueuedAt = new Date();
+      await booking.save();
     }
 
-    return res.json({
+    const recipient = req.user?.email || session.customer_details?.email;
+    const emailPayload = shouldSendEmail && recipient
+      ? {
+          to: recipient,
+          name: req.user?.name || session.customer_details?.name || "Traveller",
+          hotelName: booking.hotel?.name || "Hotel",
+          roomType: booking.room?.roomType || "Room",
+          checkInDate: booking.checkInDate,
+          checkOutDate: booking.checkOutDate,
+          totalPrice: booking.totalPrice,
+        }
+      : null;
+
+    res.json({
       success: true,
       message: wasPaid ? "Payment was already verified." : "Payment verified successfully",
-      emailSent,
-      emailMessage,
+      emailSent: Boolean(booking.paymentEmailSentAt),
+      emailMessage: shouldSendEmail ? "Your confirmation email is now being sent." : "Your confirmation email is already being processed.",
     });
+
+    // Payment is committed and the user has received the success response before email sending starts.
+    if (emailPayload) {
+      sendPaymentConfirmationEmail(emailPayload)
+        .then(() => Booking.findByIdAndUpdate(bookingId, { $set: { paymentEmailSentAt: new Date() } }))
+        .then(() => console.log("Payment confirmation email sent"))
+        .catch(async (emailError) => {
+          console.error("Payment confirmation email failed:", emailError.message);
+          await Booking.findByIdAndUpdate(bookingId, { $set: { paymentEmailQueuedAt: null } });
+        });
+    } else if (shouldSendEmail) {
+      Booking.findByIdAndUpdate(bookingId, { $set: { paymentEmailQueuedAt: null } }).catch(() => {});
+    }
+
+    return;
 
   } catch (err) {
     console.log("========== VERIFY ERROR ==========");

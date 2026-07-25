@@ -9,7 +9,7 @@
     "seed": "node seed.js"
   },
   "dependencies": {
-    "nodemailer": "^7.0.7",
+    "nodemailer": "^7.0.13",
     "openai": "^6.48.0"
   }
 }
