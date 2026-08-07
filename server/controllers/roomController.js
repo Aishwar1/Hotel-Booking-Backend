@@ -134,14 +134,17 @@ export const getRooms = async (req, res) => {
                 // Limit to 100 to prevent performance issues
                 const ksHotels = ksData.slice(0, 100);
                 
-                const fallbackImages = [
-                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60",
-                    "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60",
-                    "https://images.unsplash.com/photo-1542314831-c6a4d14d238b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60",
-                    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60"
-                ];
-
                 const mappedKsRooms = ksHotels.map(h => {
+                    const hotelName = encodeURIComponent(h["Hotel Name"] || "Indian Hotel");
+                    const index = h["S.No."] || Math.floor(Math.random() * 1000);
+                    
+                    const dynamicImages = [
+                        `https://loremflickr.com/800/600/hotel,india,room?lock=${index * 4 + 1}`,
+                        `https://loremflickr.com/800/600/hotel,india,bedroom?lock=${index * 4 + 2}`,
+                        `https://loremflickr.com/800/600/hotel,india,resort?lock=${index * 4 + 3}`,
+                        `https://loremflickr.com/800/600/hotel,india,building?lock=${index * 4 + 4}`
+                    ];
+
                     return {
                         _id: `ks_${h["S.No."]}`,
                         hotel: {
@@ -157,7 +160,7 @@ export const getRooms = async (req, res) => {
                         roomType: h["Category"] === "5 Star" ? "Luxury Suite" : "Standard Room",
                         pricePerNight: h["Category"] === "5 Star" ? 500 : 100,
                         amenities: ["Free WiFi", "Room Service", "Air Conditioning"],
-                        images: fallbackImages,
+                        images: dynamicImages,
                         isAvailable: true,
                         isKoson: true 
                     };
@@ -166,6 +169,12 @@ export const getRooms = async (req, res) => {
             }
         } catch (ksError) {
             console.error("Failed to fetch from Koson API:", ksError.message);
+        }
+
+        // Shuffle the array so it's not always in the same default order
+        for (let i = rooms.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [rooms[i], rooms[j]] = [rooms[j], rooms[i]];
         }
 
         res.json({ success: true, rooms });
