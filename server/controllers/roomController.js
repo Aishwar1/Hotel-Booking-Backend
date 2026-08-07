@@ -2,6 +2,7 @@ import Hotel from "../models/Hotel.js";
 import { v2 as cloudinary } from "cloudinary";
 import Room from "../models/Room.js";
 import fs from "fs";
+import hotelbedsClient from "../utils/hotelbedsClient.js";
 
 // ============================================================
 // ROOM CONTROLLER
@@ -75,12 +76,42 @@ export const createRoom = async (req, res) => {
 // GET /api/rooms  — All available rooms (public)
 export const getRooms = async (req, res) => {
     try {
-        const rooms = await Room.find({ isAvailable: true })
+        let rooms = await Room.find({ isAvailable: true })
             .populate({
                 path: "hotel",
                 populate: { path: "owner", select: "image" },
             })
             .sort({ createdAt: -1 });
+
+        // Convert to lean array to allow pushing custom objects
+        rooms = rooms.map(r => r.toObject());
+
+        try {
+            // Attempt to fetch live hotels from Hotelbeds (Destination: NYC as default)
+            const hbData = await hotelbedsClient.getHotels("NYC");
+            
+            if (hbData && hbData.hotels && hbData.hotels.hotels) {
+                const hbHotels = hbData.hotels.hotels.slice(0, 10); // Limit to 10 for display
+                const mappedRooms = hbHotels.map(h => ({
+                    _id: `hb_${h.code}`,
+                    hotel: {
+                        name: h.name?.content || "Hotelbeds Hotel",
+                        location: h.destinationName || "NYC",
+                        owner: { image: "" }
+                    },
+                    roomType: "Standard Room",
+                    pricePerNight: 150, // Default price since Hotelbeds 'hotels' endpoint might not have pricing directly
+                    amenities: ["Free WiFi", "Room Service"],
+                    images: ["https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60"], // Fallback image
+                    isAvailable: true,
+                    isHotelbeds: true // Flag to identify these specially if needed in frontend
+                }));
+                rooms = [...rooms, ...mappedRooms];
+            }
+        } catch (hbError) {
+            console.error("Failed to fetch from Hotelbeds:", hbError.message);
+            // Non-fatal, just continue with local rooms
+        }
 
         res.json({ success: true, rooms });
     } catch (error) {

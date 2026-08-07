@@ -14,7 +14,13 @@ class HotelbedsClient {
   async getConfig() {
     let config = await HotelbedsConfig.findOne();
     if (!config) {
-      throw new Error('Hotelbeds configuration not found in database.');
+      if (process.env.HOTELBEDS_API_KEY && process.env.HOTELBEDS_SECRET) {
+        return {
+          apikey: process.env.HOTELBEDS_API_KEY,
+          secret: process.env.HOTELBEDS_SECRET
+        };
+      }
+      throw new Error('Hotelbeds configuration not found in database or .env');
     }
     return config;
   }
