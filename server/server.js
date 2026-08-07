@@ -17,6 +17,7 @@ import bookingRouter from "./routes/bookingRoutes.js";
 import paymentRouter from "./routes/paymentRoutes.js";
 import aiRouter from "./routes/aiRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
+import configRouter from "./routes/configRoutes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -105,6 +106,7 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/reviews", reviewRouter);
+app.use("/api/config", configRouter);
 
 // ---------------- Production ----------------
 

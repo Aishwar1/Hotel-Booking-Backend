@@ -4,6 +4,7 @@ import Title from '../../components/Title';
 import { assets } from '../../assets/assets';
 import { useAppContext } from '../../context/AppContext';
 import OwnerCalendar from '../../components/OwnerCalendar';
+import ApikeyDetail from '../../components/ApikeyDetail';
 
 const Dashboard = () => {
     const { currency, user, getToken, axios } = useAppContext();
@@ -13,6 +14,8 @@ const Dashboard = () => {
         totalBookings: 0,
         totalRevenue:  0,
     });
+
+    const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
     const fetchDashboardData = async () => {
         try {
@@ -42,6 +45,15 @@ const Dashboard = () => {
                 title="Dashboard"
                 subTitle="Monitor your room listings, track bookings and analyze revenue — all in one place."
             />
+
+            <div className="my-4">
+                <button
+                    onClick={() => setShowApiKeyModal(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition"
+                >
+                    Hotelbeds Config
+                </button>
+            </div>
 
             {/* STAT CARDS */}
             <div className="flex gap-4 my-8 flex-wrap">
@@ -111,6 +123,10 @@ const Dashboard = () => {
             </div>
 
             <OwnerCalendar bookings={dashboardData.bookings} />
+
+            {showApiKeyModal && (
+                <ApikeyDetail onClose={() => setShowApiKeyModal(false)} />
+            )}
         </div>
     );
 };
