@@ -2,7 +2,7 @@ import axios from 'axios';
 
 class KosonClient {
   constructor() {
-    this.defaultUrl = KOSON_HOTEL_API_URL;
+    this.defaultUrl = 'https://api.kosontechnology.com/india-hotel.php';
   }
 
   async getHotels() {

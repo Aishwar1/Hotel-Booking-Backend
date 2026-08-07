@@ -128,47 +128,48 @@ export const getRooms = async (req, res) => {
             console.error("Failed to fetch from Hotelbeds:", hbError.message);
         }
 
-        try {
-            const ksData = await kosonClient.getHotels();
-            if (Array.isArray(ksData)) {
-                // Limit to 100 to prevent performance issues
-                const ksHotels = ksData.slice(0, 100);
+        if (process.env.ENABLE_KOSON_API === 'true') {
+            try {
+                const ksData = await kosonClient.getHotels();
+                if (Array.isArray(ksData)) {
+                    // Limit to 100 to prevent performance issues
+                    const ksHotels = ksData.slice(0, 100);
+                    
+                    const mappedKsRooms = ksHotels.map(h => {
+                        const hotelNameQuery = encodeURIComponent(`${h["Hotel Name"]} ${h["City"] || ""}`.trim());
+                        
+                        const dynamicImages = [
+                            `/api/rooms/image?q=${hotelNameQuery}&index=0`,
+                            `/api/rooms/image?q=${hotelNameQuery}&index=1`,
+                            `/api/rooms/image?q=${hotelNameQuery}&index=2`,
+                            `/api/rooms/image?q=${hotelNameQuery}&index=3`
+                        ];
 
-                const mappedKsRooms = ksHotels.map(h => {
-                    const hotelName = encodeURIComponent(h["Hotel Name"] || "Indian Hotel");
-                    const index = h["S.No."] || Math.floor(Math.random() * 1000);
-
-                    const dynamicImages = [
-                        `https://loremflickr.com/800/600/hotel,india,room?lock=${index * 4 + 1}`,
-                        `https://loremflickr.com/800/600/hotel,india,bedroom?lock=${index * 4 + 2}`,
-                        `https://loremflickr.com/800/600/hotel,india,resort?lock=${index * 4 + 3}`,
-                        `https://loremflickr.com/800/600/hotel,india,building?lock=${index * 4 + 4}`
-                    ];
-
-                    return {
-                        _id: `ks_${h["S.No."]}`,
-                        hotel: {
-                            name: h["Hotel Name"] || "Indian Hotel",
-                            location: h["City"] || "India",
-                            description: `A beautiful ${h["Category"] || "hotel"} located in ${h["City"]}, ${h["State"]}.`,
-                            address: h["Address"] || h["City"],
-                            city: h["City"],
-                            latitude: 0,
-                            longitude: 0,
-                            owner: { image: "" }
-                        },
-                        roomType: h["Category"] === "5 Star" ? "Luxury Suite" : "Standard Room",
-                        pricePerNight: h["Category"] === "5 Star" ? 500 : 100,
-                        amenities: ["Free WiFi", "Room Service", "Air Conditioning"],
-                        images: dynamicImages,
-                        isAvailable: true,
-                        isKoson: true
-                    };
-                });
-                rooms = [...rooms, ...mappedKsRooms];
+                        return {
+                            _id: `ks_${h["S.No."]}`,
+                            hotel: {
+                                name: h["Hotel Name"] || "Indian Hotel",
+                                location: h["City"] || "India",
+                                description: `A beautiful ${h["Category"] || "hotel"} located in ${h["City"]}, ${h["State"]}.`,
+                                address: h["Address"] || h["City"],
+                                city: h["City"],
+                                latitude: 0,
+                                longitude: 0,
+                                owner: { image: "" }
+                            },
+                            roomType: h["Category"] === "5 Star" ? "Luxury Suite" : "Standard Room",
+                            pricePerNight: h["Category"] === "5 Star" ? 500 : 100,
+                            amenities: ["Free WiFi", "Room Service", "Air Conditioning"],
+                            images: dynamicImages,
+                            isAvailable: true,
+                            isKoson: true 
+                        };
+                    });
+                    rooms = [...rooms, ...mappedKsRooms];
+                }
+            } catch (ksError) {
+                console.error("Failed to fetch from Koson API:", ksError.message);
             }
-        } catch (ksError) {
-            console.error("Failed to fetch from Koson API:", ksError.message);
         }
 
         // Shuffle the array so it's not always in the same default order
