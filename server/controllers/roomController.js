@@ -10,7 +10,7 @@ import kosonClient from "../utils/kosonClient.js";
 // ============================================================
 
 const ALLOWED_ROOM_TYPES = ["Single Bed", "Double Bed", "Luxury Room", "Family Suite", "Penthouse Suite", "Luxury Suite"];
-const ALLOWED_AMENITIES  = ["Free WiFi", "Free Breakfast", "Room Service", "Mountain View", "Pool Access"];
+const ALLOWED_AMENITIES = ["Free WiFi", "Free Breakfast", "Room Service", "Mountain View", "Pool Access"];
 
 // POST /api/rooms  — Create a room for the owner's hotel
 export const createRoom = async (req, res) => {
@@ -61,14 +61,14 @@ export const createRoom = async (req, res) => {
         );
 
         // Clean up temp files after upload
-        uploadedPaths.forEach((p) => { try { fs.unlinkSync(p); } catch {} });
+        uploadedPaths.forEach((p) => { try { fs.unlinkSync(p); } catch { } });
 
         await Room.create({ hotel: hotel._id, roomType, pricePerNight: price, amenities, images });
         res.json({ success: true, message: "Room created successfully" });
 
     } catch (error) {
         // Clean up any temp files on error
-        uploadedPaths.forEach((p) => { try { fs.unlinkSync(p); } catch {} });
+        uploadedPaths.forEach((p) => { try { fs.unlinkSync(p); } catch { } });
         console.error("createRoom error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
@@ -89,9 +89,9 @@ export const getRooms = async (req, res) => {
 
         try {
             const hbData = await hotelbedsClient.getHotels();
-            
+
             if (hbData && hbData.hotels) {
-                const hbHotels = hbData.hotels; 
+                const hbHotels = hbData.hotels;
                 const mappedRooms = hbHotels.map(h => {
                     // Extract exactly 4 images or fallback
                     let images = [];
@@ -115,11 +115,11 @@ export const getRooms = async (req, res) => {
                             owner: { image: "" }
                         },
                         roomType: "Standard Room",
-                        pricePerNight: 150, 
+                        pricePerNight: 150,
                         amenities: ["Free WiFi", "Room Service", "Air Conditioning"],
                         images: images,
                         isAvailable: true,
-                        isHotelbeds: true 
+                        isHotelbeds: true
                     };
                 });
                 rooms = [...rooms, ...mappedRooms];
@@ -133,11 +133,11 @@ export const getRooms = async (req, res) => {
             if (Array.isArray(ksData)) {
                 // Limit to 100 to prevent performance issues
                 const ksHotels = ksData.slice(0, 100);
-                
+
                 const mappedKsRooms = ksHotels.map(h => {
                     const hotelName = encodeURIComponent(h["Hotel Name"] || "Indian Hotel");
                     const index = h["S.No."] || Math.floor(Math.random() * 1000);
-                    
+
                     const dynamicImages = [
                         `https://loremflickr.com/800/600/hotel,india,room?lock=${index * 4 + 1}`,
                         `https://loremflickr.com/800/600/hotel,india,bedroom?lock=${index * 4 + 2}`,
@@ -162,7 +162,7 @@ export const getRooms = async (req, res) => {
                         amenities: ["Free WiFi", "Room Service", "Air Conditioning"],
                         images: dynamicImages,
                         isAvailable: true,
-                        isKoson: true 
+                        isKoson: true
                     };
                 });
                 rooms = [...rooms, ...mappedKsRooms];
