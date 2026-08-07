@@ -8,7 +8,7 @@ import HotelbedsConfig from '../models/HotelbedsConfig.js';
  */
 class HotelbedsClient {
   constructor() {
-    this.baseUrl = 'https://api.test.hotelbeds.com/hotel-api/1.0'; // Default to test
+    this.baseUrl = 'https://api.test.hotelbeds.com/hotel-content-api/1.0';
   }
 
   async getConfig() {
@@ -28,7 +28,6 @@ class HotelbedsClient {
   async getHeaders() {
     const config = await this.getConfig();
     
-    // Hotelbeds API requires a signature: SHA256(apiKey + secret + timestamp)
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const signature = crypto
       .createHash('sha256')
@@ -43,13 +42,16 @@ class HotelbedsClient {
     };
   }
 
-  async getHotels(destinationCode) {
+  async getHotels() {
     try {
       const headers = await this.getHeaders();
       const response = await axios.get(`${this.baseUrl}/hotels`, {
         headers,
         params: {
-          destinationCode
+          fields: 'all',
+          language: 'ENG',
+          from: 1,
+          to: 20
         }
       });
       return response.data;
@@ -58,8 +60,6 @@ class HotelbedsClient {
       throw error;
     }
   }
-
-  // Add more methods here as needed for "real time database" integration
 }
 
 export default new HotelbedsClient();

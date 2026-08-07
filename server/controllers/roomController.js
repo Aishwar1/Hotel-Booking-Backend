@@ -87,30 +87,44 @@ export const getRooms = async (req, res) => {
         rooms = rooms.map(r => r.toObject());
 
         try {
-            // Attempt to fetch live hotels from Hotelbeds (Destination: NYC as default)
-            const hbData = await hotelbedsClient.getHotels("NYC");
+            const hbData = await hotelbedsClient.getHotels();
             
-            if (hbData && hbData.hotels && hbData.hotels.hotels) {
-                const hbHotels = hbData.hotels.hotels.slice(0, 10); // Limit to 10 for display
-                const mappedRooms = hbHotels.map(h => ({
-                    _id: `hb_${h.code}`,
-                    hotel: {
-                        name: h.name?.content || "Hotelbeds Hotel",
-                        location: h.destinationName || "NYC",
-                        owner: { image: "" }
-                    },
-                    roomType: "Standard Room",
-                    pricePerNight: 150, // Default price since Hotelbeds 'hotels' endpoint might not have pricing directly
-                    amenities: ["Free WiFi", "Room Service"],
-                    images: ["https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60"], // Fallback image
-                    isAvailable: true,
-                    isHotelbeds: true // Flag to identify these specially if needed in frontend
-                }));
+            if (hbData && hbData.hotels) {
+                const hbHotels = hbData.hotels; 
+                const mappedRooms = hbHotels.map(h => {
+                    // Extract exactly 4 images or fallback
+                    let images = [];
+                    if (h.images && h.images.length > 0) {
+                        images = h.images.slice(0, 4).map(img => `http://photos.hotelbeds.com/giata/${img.path}`);
+                    }
+                    while (images.length < 4) {
+                        images.push("https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60");
+                    }
+
+                    return {
+                        _id: `hb_${h.code}`,
+                        hotel: {
+                            name: h.name?.content || "Hotelbeds Hotel",
+                            location: h.destination?.name?.content || "Global Destination",
+                            description: h.description?.content || "A wonderful stay provided by Hotelbeds.",
+                            locationMap: [
+                                h.coordinates?.latitude || 0,
+                                h.coordinates?.longitude || 0
+                            ],
+                            owner: { image: "" }
+                        },
+                        roomType: "Standard Room",
+                        pricePerNight: 150, 
+                        amenities: ["Free WiFi", "Room Service", "Air Conditioning"],
+                        images: images,
+                        isAvailable: true,
+                        isHotelbeds: true 
+                    };
+                });
                 rooms = [...rooms, ...mappedRooms];
             }
         } catch (hbError) {
             console.error("Failed to fetch from Hotelbeds:", hbError.message);
-            // Non-fatal, just continue with local rooms
         }
 
         res.json({ success: true, rooms });

@@ -11,6 +11,9 @@ import {
 // ============================================================
 
 const checkAvailability = async ({ room, checkInDate, checkOutDate }) => {
+  if (typeof room === 'string' && room.startsWith('hb_')) {
+    return true; // Hotelbeds mock availability
+  }
   const bookings = await Booking.find({
     room,
     status: { $ne: "cancelled" },
@@ -80,13 +83,25 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    const roomData = await Room.findById(room).populate("hotel");
+    let roomData = await Room.findById(room).populate("hotel");
+    let hotelId;
+    let roomPrice = 150;
+    let hotelName = "Hotel";
 
-    if (!roomData) {
+    if (!roomData && typeof room === 'string' && room.startsWith('hb_')) {
+      // Mock roomData for Hotelbeds
+      roomData = { _id: room, pricePerNight: 150 };
+      hotelId = room; // Use room ID as hotel ID for mock
+      hotelName = "Hotelbeds Hotel";
+    } else if (!roomData) {
       return res.status(404).json({
         success: false,
         message: "Room not found",
       });
+    } else {
+      hotelId = roomData.hotel._id;
+      roomPrice = roomData.pricePerNight;
+      hotelName = roomData.hotel.name;
     }
 
     const available = await checkAvailability({
@@ -110,11 +125,11 @@ export const createBooking = async (req, res) => {
     const booking = await Booking.create({
       user: req.user._id,
       room: roomData._id,
-      hotel: roomData.hotel._id,
+      hotel: hotelId,
       guests: Number(guests),
       checkInDate,
       checkOutDate,
-      totalPrice: roomData.pricePerNight * nights,
+      totalPrice: roomPrice * nights,
       paymentMethod,
       isPaid: false,
       status: paymentMethod === "Pay At Hotel" ? "confirmed" : "pending",
@@ -125,7 +140,7 @@ export const createBooking = async (req, res) => {
       sendBookingCreatedEmail({
         to: req.user.email,
         name: req.user.name,
-        hotelName: roomData.hotel.name,
+        hotelName: hotelName,
         checkInDate: booking.checkInDate,
         checkOutDate: booking.checkOutDate,
         totalPrice: booking.totalPrice,
