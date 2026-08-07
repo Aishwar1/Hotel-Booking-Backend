@@ -3,6 +3,7 @@ import { v2 as cloudinary } from "cloudinary";
 import Room from "../models/Room.js";
 import fs from "fs";
 import hotelbedsClient from "../utils/hotelbedsClient.js";
+import kosonClient from "../utils/kosonClient.js";
 
 // ============================================================
 // ROOM CONTROLLER
@@ -125,6 +126,46 @@ export const getRooms = async (req, res) => {
             }
         } catch (hbError) {
             console.error("Failed to fetch from Hotelbeds:", hbError.message);
+        }
+
+        try {
+            const ksData = await kosonClient.getHotels();
+            if (Array.isArray(ksData)) {
+                // Limit to 100 to prevent performance issues
+                const ksHotels = ksData.slice(0, 100);
+                
+                const fallbackImages = [
+                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60",
+                    "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60",
+                    "https://images.unsplash.com/photo-1542314831-c6a4d14d238b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60",
+                    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60"
+                ];
+
+                const mappedKsRooms = ksHotels.map(h => {
+                    return {
+                        _id: `ks_${h["S.No."]}`,
+                        hotel: {
+                            name: h["Hotel Name"] || "Indian Hotel",
+                            location: h["City"] || "India",
+                            description: `A beautiful ${h["Category"] || "hotel"} located in ${h["City"]}, ${h["State"]}.`,
+                            address: h["Address"] || h["City"],
+                            city: h["City"],
+                            latitude: 0,
+                            longitude: 0,
+                            owner: { image: "" }
+                        },
+                        roomType: h["Category"] === "5 Star" ? "Luxury Suite" : "Standard Room",
+                        pricePerNight: h["Category"] === "5 Star" ? 500 : 100,
+                        amenities: ["Free WiFi", "Room Service", "Air Conditioning"],
+                        images: fallbackImages,
+                        isAvailable: true,
+                        isKoson: true 
+                    };
+                });
+                rooms = [...rooms, ...mappedKsRooms];
+            }
+        } catch (ksError) {
+            console.error("Failed to fetch from Koson API:", ksError.message);
         }
 
         res.json({ success: true, rooms });

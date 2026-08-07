@@ -11,8 +11,8 @@ import {
 // ============================================================
 
 const checkAvailability = async ({ room, checkInDate, checkOutDate }) => {
-  if (typeof room === 'string' && room.startsWith('hb_')) {
-    return true; // Hotelbeds mock availability
+  if (typeof room === 'string' && (room.startsWith('hb_') || room.startsWith('ks_'))) {
+    return true; // Mock availability for external APIs
   }
   const bookings = await Booking.find({
     room,
@@ -88,11 +88,11 @@ export const createBooking = async (req, res) => {
     let roomPrice = 150;
     let hotelName = "Hotel";
 
-    if (!roomData && typeof room === 'string' && room.startsWith('hb_')) {
-      // Mock roomData for Hotelbeds
+    if (!roomData && typeof room === 'string' && (room.startsWith('hb_') || room.startsWith('ks_'))) {
+      // Mock roomData for External API
       roomData = { _id: room, pricePerNight: 150 };
       hotelId = room; // Use room ID as hotel ID for mock
-      hotelName = "Hotelbeds Hotel";
+      hotelName = room.startsWith('hb_') ? "Hotelbeds Hotel" : "Indian Hotel";
     } else if (!roomData) {
       return res.status(404).json({
         success: false,
