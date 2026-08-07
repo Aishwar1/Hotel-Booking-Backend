@@ -51,7 +51,7 @@ class HotelbedsClient {
           fields: 'all',
           language: 'ENG',
           from: 1,
-          to: 20
+          to: 150
         }
       });
       return response.data;

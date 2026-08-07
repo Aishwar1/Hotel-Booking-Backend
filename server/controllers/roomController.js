@@ -107,10 +107,10 @@ export const getRooms = async (req, res) => {
                             name: h.name?.content || "Hotelbeds Hotel",
                             location: h.destination?.name?.content || "Global Destination",
                             description: h.description?.content || "A wonderful stay provided by Hotelbeds.",
-                            locationMap: [
-                                h.coordinates?.latitude || 0,
-                                h.coordinates?.longitude || 0
-                            ],
+                            address: h.address?.content || "City Center",
+                            city: h.city?.content || h.destination?.name?.content || "Global Destination",
+                            latitude: h.coordinates?.latitude || 0,
+                            longitude: h.coordinates?.longitude || 0,
                             owner: { image: "" }
                         },
                         roomType: "Standard Room",
